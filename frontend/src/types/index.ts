@@ -1,0 +1,350 @@
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  errors?: string[];
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface BaseEntity {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  isPublished: boolean;
+  isDeleted: boolean;
+}
+
+export const ProjectStatus = {
+  Planning: 0,
+  InProgress: 1,
+  Completed: 2,
+  OnHold: 3,
+} as const;
+export type ProjectStatus = (typeof ProjectStatus)[keyof typeof ProjectStatus];
+
+export const MessageStatus = {
+  New: 0,
+  InProgress: 1,
+  Closed: 2,
+} as const;
+export type MessageStatus = (typeof MessageStatus)[keyof typeof MessageStatus];
+
+export const ApplicationStatus = {
+  Pending: 0,
+  Reviewing: 1,
+  Accepted: 2,
+  Rejected: 3,
+} as const;
+export type ApplicationStatus = (typeof ApplicationStatus)[keyof typeof ApplicationStatus];
+
+export interface Service extends BaseEntity {
+  title: string;
+  slug: string;
+  shortDescription: string;
+  description: string;
+  icon: string;
+  sortOrder: number;
+}
+
+export interface Technology extends BaseEntity {
+  name: string;
+  category: string;
+  iconUrl: string;
+  sortOrder: number;
+}
+
+export interface SoftwareProduct extends BaseEntity {
+  name: string;
+  slug: string;
+  shortDescription: string;
+  logoUrl: string;
+  sortOrder: number;
+}
+
+export interface Industry extends BaseEntity {
+  name: string;
+  slug: string;
+  shortDescription: string;
+  iconUrl: string;
+  sortOrder: number;
+}
+
+export interface FaqItem extends BaseEntity {
+  question: string;
+  answer: string;
+  sortOrder: number;
+}
+
+export interface SiteStat extends BaseEntity {
+  value: string;
+  label: string;
+  icon: string;
+  sortOrder: number;
+}
+
+export interface CompanyHighlight extends BaseEntity {
+  title: string;
+  description: string;
+  sortOrder: number;
+}
+
+export interface ProcessStep extends BaseEntity {
+  stepLabel: string;
+  title: string;
+  description: string;
+  sortOrder: number;
+}
+
+export interface Client extends BaseEntity {
+  name: string;
+  logoUrl: string;
+  website: string;
+}
+
+export interface Portfolio extends BaseEntity {
+  title: string;
+  slug: string;
+  description: string;
+  content: string;
+  clientId?: string;
+  client?: Client;
+  logoUrl: string;
+  imagesJson: string;
+  techStackJson: string;
+  isFeatured: boolean;
+  sortOrder: number;
+}
+
+export interface BlogCategory extends BaseEntity {
+  name: string;
+  slug: string;
+}
+
+export interface Blog extends BaseEntity {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  featuredImageUrl: string;
+  categoryId?: string;
+  category?: BlogCategory;
+  authorId?: string;
+  publishedAt?: string;
+  seoTitle: string;
+  seoDescription: string;
+}
+
+export interface Project extends BaseEntity {
+  title: string;
+  description: string;
+  serviceId?: string;
+  service?: Service;
+  status: ProjectStatus;
+}
+
+export interface Testimonial extends BaseEntity {
+  name: string;
+  company: string;
+  quote: string;
+  avatarUrl: string;
+  sortOrder: number;
+  rating: number;
+}
+
+export interface Career extends BaseEntity {
+  title: string;
+  slug: string;
+  department: string;
+  location: string;
+  type: string;
+  description: string;
+  requirements: string;
+}
+
+export interface JobApplication {
+  id: string;
+  careerId: string;
+  name: string;
+  email: string;
+  phone: string;
+  resumeUrl: string;
+  coverLetter: string;
+  status: ApplicationStatus;
+  createdAt: string;
+}
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  body: string;
+  status: MessageStatus;
+  assignedToId?: string;
+  createdAt: string;
+}
+
+export interface Subscriber {
+  id: string;
+  email: string;
+  createdAt: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  roleId: string;
+  role?: Role;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SiteSetting {
+  id: string;
+  key: string;
+  value: string;
+  group: string;
+  isPublic: boolean;
+  updatedAt: string;
+}
+
+export interface SeoSetting {
+  id: string;
+  pageKey: string;
+  title: string;
+  description: string;
+  keywords: string;
+  ogImage: string;
+  isPublished: boolean;
+  maintenanceMessage: string;
+  updatedAt: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  userId: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  details: string;
+  createdAt: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  roleName?: string;
+  isActive?: boolean;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
+  user: AuthUser;
+}
+
+export interface DashboardStats {
+  totalProjects: number;
+  totalServices: number;
+  totalPortfolio: number;
+  totalMessages: number;
+  totalBlogs: number;
+  totalCareers: number;
+  unreadMessages: number;
+}
+
+export interface ContactFormRequest {
+  name: string;
+  email: string;
+  subject: string;
+  body: string;
+}
+
+export interface SubscribeRequest {
+  email: string;
+}
+
+export type CreateService = Omit<Service, keyof BaseEntity>;
+export type UpdateService = Partial<Omit<Service, keyof BaseEntity>>;
+
+export type CreateTechnology = Omit<Technology, keyof BaseEntity>;
+export type UpdateTechnology = Partial<Omit<Technology, keyof BaseEntity>>;
+
+export type CreateSoftwareProduct = Omit<SoftwareProduct, keyof BaseEntity>;
+export type UpdateSoftwareProduct = Partial<Omit<SoftwareProduct, keyof BaseEntity>>;
+export type CreateIndustry = Omit<Industry, keyof BaseEntity>;
+export type UpdateIndustry = Partial<Omit<Industry, keyof BaseEntity>>;
+export type CreateFaqItem = Omit<FaqItem, keyof BaseEntity>;
+export type UpdateFaqItem = Partial<Omit<FaqItem, keyof BaseEntity>>;
+export type CreateSiteStat = Omit<SiteStat, keyof BaseEntity>;
+export type UpdateSiteStat = Partial<Omit<SiteStat, keyof BaseEntity>>;
+export type CreateCompanyHighlight = Omit<CompanyHighlight, keyof BaseEntity>;
+export type UpdateCompanyHighlight = Partial<Omit<CompanyHighlight, keyof BaseEntity>>;
+export type CreateProcessStep = Omit<ProcessStep, keyof BaseEntity>;
+export type UpdateProcessStep = Partial<Omit<ProcessStep, keyof BaseEntity>>;
+
+export type CreatePortfolio = Omit<Portfolio, keyof BaseEntity | 'client'>;
+export type UpdatePortfolio = Partial<Omit<Portfolio, keyof BaseEntity | 'client'>>;
+
+export type CreateBlog = Omit<Blog, keyof BaseEntity | 'category'>;
+export type UpdateBlog = Partial<Omit<Blog, keyof BaseEntity | 'category'>>;
+
+export type CreateClient = Omit<Client, keyof BaseEntity>;
+export type UpdateClient = Partial<Omit<Client, keyof BaseEntity>>;
+
+export type CreateCareer = Omit<Career, keyof BaseEntity>;
+export type UpdateCareer = Partial<Omit<Career, keyof BaseEntity>>;
+
+export type CreateProject = Omit<Project, keyof BaseEntity | 'service'>;
+export type UpdateProject = Partial<Omit<Project, keyof BaseEntity | 'service'>>;
+
+export type CreateTestimonial = Omit<Testimonial, keyof BaseEntity>;
+export type UpdateTestimonial = Partial<Omit<Testimonial, keyof BaseEntity>>;
+
+export type CreateUser = {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  roleId: string;
+  isActive: boolean;
+};
+
+export type UpdateUser = Partial<Omit<CreateUser, 'password'>> & { password?: string };
+
+export type CreateSeoSetting = Omit<SeoSetting, 'id' | 'updatedAt'>;
+export type UpdateSeoSetting = Partial<CreateSeoSetting>;
+
+export type CreateSiteSetting = Omit<SiteSetting, 'id' | 'updatedAt'>;
+export type UpdateSiteSetting = Partial<CreateSiteSetting>;

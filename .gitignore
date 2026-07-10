@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+frontend/dist/
+
+# Build outputs
+backend/**/bin/
+backend/**/obj/
+
+# Environment
+.env
+frontend/.env
+!frontend/.env.example
+!.env.example
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Uploads
+backend/src/TransNet.API/wwwroot/uploads/*
+!backend/src/TransNet.API/wwwroot/uploads/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

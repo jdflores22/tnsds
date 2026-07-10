@@ -1,0 +1,89 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: transnet-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: transnet
+      MYSQL_USER: transnet
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-transnetpass}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: transnet-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: transnet-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5000
+      ConnectionStrings__DefaultConnection: Server=mysql;Port=3306;Database=transnet;User=transnet;Password=${MYSQL_PASSWORD:-transnetpass};
+      ConnectionStrings__Redis: redis:6379
+      Jwt__Secret: ${JWT_SECRET:-TransNet-Super-Secret-Key-Min-32-Chars-Long!}
+      Jwt__RefreshSecret: ${JWT_REFRESH_SECRET:-TransNet-Refresh-Secret-Key-Min-32-Chars!}
+      Jwt__Issuer: TransNet
+      Jwt__Audience: TransNet
+      Cors__Origins: ${CORS_ORIGINS:-http://localhost:5173,http://localhost}
+    ports:
+      - "5000:5000"
+    volumes:
+      - uploads_data:/app/wwwroot/uploads
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:5000/api/v1}
+    container_name: transnet-frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+
+  nginx:
+    image: nginx:alpine
+    container_name: transnet-nginx
+    restart: unless-stopped
+    depends_on:
+      - api
+      - frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+
+volumes:
+  mysql_data:
+  redis_data:
+  uploads_data:

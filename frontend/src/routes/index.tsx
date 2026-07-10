@@ -1,0 +1,106 @@
+import { lazy, Suspense, type ReactNode } from 'react';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { PageLoader } from '@/components/ui/Spinner';
+import { ProtectedRoute } from '@/routes/ProtectedRoute';
+import { PublicLayout } from '@/layouts/PublicLayout';
+import { AdminLayout } from '@/layouts/AdminLayout';
+import { AuthLayout } from '@/layouts/AuthLayout';
+
+const HomePage = lazy(() => import('@/pages/Home/HomePage'));
+const AboutPage = lazy(() => import('@/pages/About/AboutPage'));
+const ServicesPage = lazy(() => import('@/pages/Services/ServicesPage'));
+const ServiceDetailPage = lazy(() => import('@/pages/Services/ServiceDetailPage'));
+const PortfolioPage = lazy(() => import('@/pages/Portfolio/PortfolioPage'));
+const PortfolioDetailPage = lazy(() => import('@/pages/Portfolio/PortfolioDetailPage'));
+const TechnologiesPage = lazy(() => import('@/pages/Technologies/TechnologiesPage'));
+const IndustriesPage = lazy(() => import('@/pages/Industries/IndustriesPage'));
+const BlogPage = lazy(() => import('@/pages/Blog/BlogPage'));
+const BlogDetailPage = lazy(() => import('@/pages/Blog/BlogDetailPage'));
+const CareersPage = lazy(() => import('@/pages/Careers/CareersPage'));
+const ContactPage = lazy(() => import('@/pages/Contact/ContactPage'));
+const PrivacyPage = lazy(() => import('@/pages/Privacy/PrivacyPage'));
+const TermsPage = lazy(() => import('@/pages/Terms/TermsPage'));
+const NotFoundPage = lazy(() => import('@/pages/NotFound/NotFoundPage'));
+
+const AdminLoginPage = lazy(() => import('@/pages/admin/LoginPage'));
+const AdminDashboardPage = lazy(() => import('@/pages/admin/DashboardPage'));
+const ServicesAdminPage = lazy(() => import('@/pages/admin/ServicesAdminPage'));
+const TechnologiesAdminPage = lazy(() => import('@/pages/admin/TechnologiesAdminPage'));
+const ProductsAdminPage = lazy(() => import('@/pages/admin/ProductsAdminPage'));
+const IndustriesAdminPage = lazy(() => import('@/pages/admin/IndustriesAdminPage'));
+const FaqAdminPage = lazy(() => import('@/pages/admin/FaqAdminPage'));
+const SiteStatsAdminPage = lazy(() => import('@/pages/admin/SiteStatsAdminPage'));
+const CompanyHighlightsAdminPage = lazy(() => import('@/pages/admin/CompanyHighlightsAdminPage'));
+const ProcessStepsAdminPage = lazy(() => import('@/pages/admin/ProcessStepsAdminPage'));
+const PortfolioAdminPage = lazy(() => import('@/pages/admin/PortfolioAdminPage'));
+const ClientsAdminPage = lazy(() => import('@/pages/admin/ClientsAdminPage'));
+const BlogAdminPage = lazy(() => import('@/pages/admin/BlogAdminPage'));
+const MessagesAdminPage = lazy(() => import('@/pages/admin/MessagesAdminPage'));
+const CareersAdminPage = lazy(() => import('@/pages/admin/CareersAdminPage'));
+const UsersAdminPage = lazy(() => import('@/pages/admin/UsersAdminPage'));
+const SettingsAdminPage = lazy(() => import('@/pages/admin/SettingsAdminPage'));
+const SeoAdminPage = lazy(() => import('@/pages/admin/SeoAdminPage'));
+const ProjectsAdminPage = lazy(() => import('@/pages/admin/ProjectsAdminPage'));
+const TestimonialsAdminPage = lazy(() => import('@/pages/admin/TestimonialsAdminPage'));
+
+function LazyPage({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
+}
+
+export const router = createBrowserRouter([
+  {
+    element: <PublicLayout />,
+    children: [
+      { index: true, element: <LazyPage><HomePage /></LazyPage> },
+      { path: 'about', element: <LazyPage><AboutPage /></LazyPage> },
+      { path: 'services', element: <LazyPage><ServicesPage /></LazyPage> },
+      { path: 'services/:slug', element: <LazyPage><ServiceDetailPage /></LazyPage> },
+      { path: 'portfolio', element: <LazyPage><PortfolioPage /></LazyPage> },
+      { path: 'portfolio/:slug', element: <LazyPage><PortfolioDetailPage /></LazyPage> },
+      { path: 'technologies', element: <LazyPage><TechnologiesPage /></LazyPage> },
+      { path: 'industries', element: <LazyPage><IndustriesPage /></LazyPage> },
+      { path: 'blog', element: <LazyPage><BlogPage /></LazyPage> },
+      { path: 'blog/:slug', element: <LazyPage><BlogDetailPage /></LazyPage> },
+      { path: 'careers', element: <LazyPage><CareersPage /></LazyPage> },
+      { path: 'contact', element: <LazyPage><ContactPage /></LazyPage> },
+      { path: 'privacy', element: <LazyPage><PrivacyPage /></LazyPage> },
+      { path: 'terms', element: <LazyPage><TermsPage /></LazyPage> },
+      { path: '*', element: <LazyPage><NotFoundPage /></LazyPage> },
+    ],
+  },
+  {
+    path: 'admin/login',
+    element: <AuthLayout />,
+    children: [{ index: true, element: <LazyPage><AdminLoginPage /></LazyPage> }],
+  },
+  {
+    path: 'admin',
+    element: (
+      <ProtectedRoute>
+        <AdminLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <LazyPage><AdminDashboardPage /></LazyPage> },
+      { path: 'services', element: <LazyPage><ServicesAdminPage /></LazyPage> },
+      { path: 'products', element: <LazyPage><ProductsAdminPage /></LazyPage> },
+      { path: 'industries', element: <LazyPage><IndustriesAdminPage /></LazyPage> },
+      { path: 'faq', element: <LazyPage><FaqAdminPage /></LazyPage> },
+      { path: 'stats', element: <LazyPage><SiteStatsAdminPage /></LazyPage> },
+      { path: 'highlights', element: <LazyPage><CompanyHighlightsAdminPage /></LazyPage> },
+      { path: 'process-steps', element: <LazyPage><ProcessStepsAdminPage /></LazyPage> },
+      { path: 'technologies', element: <LazyPage><TechnologiesAdminPage /></LazyPage> },
+      { path: 'portfolio', element: <LazyPage><PortfolioAdminPage /></LazyPage> },
+      { path: 'clients', element: <LazyPage><ClientsAdminPage /></LazyPage> },
+      { path: 'testimonials', element: <LazyPage><TestimonialsAdminPage /></LazyPage> },
+      { path: 'blog', element: <LazyPage><BlogAdminPage /></LazyPage> },
+      { path: 'messages', element: <LazyPage><MessagesAdminPage /></LazyPage> },
+      { path: 'careers', element: <LazyPage><CareersAdminPage /></LazyPage> },
+      { path: 'users', element: <LazyPage><UsersAdminPage /></LazyPage> },
+      { path: 'settings', element: <LazyPage><SettingsAdminPage /></LazyPage> },
+      { path: 'seo', element: <LazyPage><SeoAdminPage /></LazyPage> },
+      { path: 'projects', element: <LazyPage><ProjectsAdminPage /></LazyPage> },
+    ],
+  },
+  { path: 'admin/*', element: <Navigate to="/admin" replace /> },
+]);
