@@ -50,6 +50,17 @@ public class ContactMessageService : IContactMessageService
             $"Thank you {dto.Name}, we have received your message and will respond shortly.",
             cancellationToken);
 
+        var adminEmail = await _context.SiteSettings
+            .Where(s => s.Key == "company_email")
+            .Select(s => s.Value)
+            .FirstOrDefaultAsync(cancellationToken) ?? "info@trans-net.com";
+
+        await _emailService.SendAsync(
+            adminEmail,
+            $"New contact message from {dto.Name}",
+            $"<p><strong>{dto.Name}</strong> ({dto.Email}) submitted a message.</p><p><strong>Subject:</strong> {dto.Subject}</p><p>{dto.Body}</p>",
+            cancellationToken);
+
         return Map(entity);
     }
 

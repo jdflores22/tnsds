@@ -738,6 +738,7 @@ public class DatabaseSeeder
             ("home", "TRANS-NET | Software Development Company", "TRANS-NET delivers custom software, web, mobile, and enterprise solutions."),
             ("about", "About TRANS-NET", "Learn about TRANS-NET's mission, team, and expertise."),
             ("services", "Our Services | TRANS-NET", "Explore TRANS-NET software development services."),
+            ("products", "Software Products | TRANS-NET", "Enterprise software products — ECMS, CRM, ERP and more from TRANS-NET."),
             ("portfolio", "Portfolio | TRANS-NET", "View TRANS-NET project portfolio and case studies."),
             ("industries", "Industries | TRANS-NET", "Industries we serve with tailored software solutions."),
             ("contact", "Contact TRANS-NET", "Get in touch with TRANS-NET for your software needs."),
@@ -764,6 +765,7 @@ public class DatabaseSeeder
     {
         var pages = new (string PageKey, string Title, string Description)[]
         {
+            ("products", "Software Products | TRANS-NET", "Enterprise software products — ECMS, CRM, ERP and more from TRANS-NET."),
             ("technologies", "Technologies | TRANS-NET", "Modern technology stack used by TRANS-NET."),
             ("blog", "Blog | TRANS-NET", "Latest articles and insights from TRANS-NET."),
             ("privacy", "Privacy Policy | TRANS-NET", "TRANS-NET privacy policy."),

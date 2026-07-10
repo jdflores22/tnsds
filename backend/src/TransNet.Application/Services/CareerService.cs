@@ -100,8 +100,13 @@ public class CareerService : ICareerService
 public class JobApplicationService : IJobApplicationService
 {
     private readonly IApplicationDbContext _context;
+    private readonly IEmailService _emailService;
 
-    public JobApplicationService(IApplicationDbContext context) => _context = context;
+    public JobApplicationService(IApplicationDbContext context, IEmailService emailService)
+    {
+        _context = context;
+        _emailService = emailService;
+    }
 
     public async Task<(List<JobApplicationDto> Items, ResponseMeta Meta)> GetAllAsync(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default)
     {
@@ -133,6 +138,24 @@ public class JobApplicationService : IJobApplicationService
 
         var career = await _context.Careers.FirstOrDefaultAsync(c => c.Id == dto.CareerId, cancellationToken);
         entity.Career = career!;
+
+        var adminEmail = await _context.SiteSettings
+            .Where(s => s.Key == "company_email")
+            .Select(s => s.Value)
+            .FirstOrDefaultAsync(cancellationToken) ?? "info@trans-net.com";
+
+        await _emailService.SendAsync(
+            dto.Email,
+            "Application received — TRANS-NET",
+            $"<p>Hi {dto.FullName},</p><p>Thank you for applying for <strong>{career?.Title ?? "our open role"}</strong>. We have received your application and will review it shortly.</p>",
+            cancellationToken);
+
+        await _emailService.SendAsync(
+            adminEmail,
+            $"New job application: {dto.FullName}",
+            $"<p><strong>{dto.FullName}</strong> applied for <strong>{career?.Title}</strong>.</p><p>Email: {dto.Email}<br/>Phone: {dto.Phone}</p><p>Review in the admin panel under Job applications.</p>",
+            cancellationToken);
+
         return Map(entity);
     }
 

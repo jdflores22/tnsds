@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import { cn } from '@/utils/cn';
 
 export function Table({ className, children }: { className?: string; children: ReactNode }) {
@@ -26,9 +26,20 @@ export function TBody({ children }: { children: ReactNode }) {
   return <tbody className="divide-y divide-slate-100">{children}</tbody>;
 }
 
-export function TR({ children, className }: { children: ReactNode; className?: string }) {
+export function TR({
+  children,
+  className,
+  onClick,
+}: {
+  children: ReactNode;
+  className?: string;
+  onClick?: (e: MouseEvent<HTMLTableRowElement>) => void;
+}) {
   return (
-    <tr className={cn('transition-colors hover:bg-brand-gold-500/[0.03]', className)}>
+    <tr
+      className={cn('transition-colors hover:bg-brand-gold-500/[0.03]', className)}
+      onClick={onClick}
+    >
       {children}
     </tr>
   );
@@ -38,6 +49,18 @@ export function TH({ children, className }: { children: ReactNode; className?: s
   return <th className={cn('px-5 py-3.5 font-medium', className)}>{children}</th>;
 }
 
-export function TD({ children, className }: { children: ReactNode; className?: string }) {
-  return <td className={cn('px-5 py-3.5 text-slate-700', className)}>{children}</td>;
+export function TD({
+  children,
+  className,
+  onClick,
+}: {
+  children: ReactNode;
+  className?: string;
+  onClick?: (e: MouseEvent<HTMLTableCellElement>) => void;
+}) {
+  return (
+    <td className={cn('px-5 py-3.5 text-slate-700', className)} onClick={onClick}>
+      {children}
+    </td>
+  );
 }

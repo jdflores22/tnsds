@@ -30,6 +30,14 @@ public class ProductsController : ControllerBase
         return item is null ? NotFound(ApiResponse<ProductDto>.Fail("Product not found")) : Ok(ApiResponse<ProductDto>.Ok(item));
     }
 
+    [HttpGet("slug/{slug}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ApiResponse<ProductDto>>> GetBySlug(string slug)
+    {
+        var item = await _service.GetBySlugAsync(slug);
+        return item is null ? NotFound(ApiResponse<ProductDto>.Fail("Product not found")) : Ok(ApiResponse<ProductDto>.Ok(item));
+    }
+
     [HttpPost]
     [Authorize(Roles = ApiConstants.AdminRoles)]
     public async Task<ActionResult<ApiResponse<ProductDto>>> Create([FromBody] CreateProductDto dto)

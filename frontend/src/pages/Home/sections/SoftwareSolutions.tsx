@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import { ArrowUpRight } from 'lucide-react';
 import { useProducts } from '@/api/hooks';
 import { Container } from '@/components/common/Container';
 import { PageSection, SectionHeading } from '@/components/common/SectionHeading';
@@ -40,8 +42,8 @@ export function SoftwareSolutions() {
             {sorted.map((product, index) => {
               const logoUrl = product.logoUrl ? resolveMediaUrl(product.logoUrl) : null;
               return (
-                <Card
-                  key={product.id}
+                <Link key={product.id} to={`/products/${product.slug}`} className="group block">
+                  <Card
                   className={cn(
                     'overflow-hidden border-b-4 transition-shadow hover:shadow-md',
                     brandBorders[index % brandBorders.length],
@@ -67,8 +69,13 @@ export function SoftwareSolutions() {
                         {product.shortDescription}
                       </p>
                     )}
+                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary-800 group-hover:text-brand-gold-600">
+                      Learn more
+                      <ArrowUpRight className="h-3 w-3" />
+                    </span>
                   </CardBody>
                 </Card>
+                </Link>
               );
             })}
           </div>

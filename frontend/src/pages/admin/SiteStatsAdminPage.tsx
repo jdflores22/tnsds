@@ -3,6 +3,7 @@ import {
   useCreateSiteStat,
   useUpdateSiteStat,
   useDeleteSiteStat,
+  useReorderSiteStats,
 } from '@/api/hooks';
 import type { SiteStat } from '@/types';
 import { AdminCrudPage } from '@/components/admin/AdminCrudPage';
@@ -13,6 +14,7 @@ export default function SiteStatsAdminPage() {
   const createMutation = useCreateSiteStat();
   const updateMutation = useUpdateSiteStat();
   const deleteMutation = useDeleteSiteStat();
+  const reorderMutation = useReorderSiteStats();
 
   return (
     <AdminCrudPage<SiteStat>
@@ -28,6 +30,8 @@ export default function SiteStatsAdminPage() {
         { key: 'icon', label: 'Icon' },
         { key: 'sortOrder', label: 'Order' },
       ]}
+      onReorder={(ordered) => reorderMutation.mutateAsync(ordered)}
+      isReordering={reorderMutation.isPending}
       onDelete={(id) => deleteMutation.mutateAsync(id)}
       formContent={(item, onClose) => (
         <EntityForm

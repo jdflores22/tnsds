@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
+import { CompactSettingsSection } from '@/components/admin/SettingsTabBar';
 import { SaveFeedback, SettingsPanel } from '@/components/admin/SettingsPanel';
 import { isValidHexColor, normalizeHexColor } from '@/utils/color';
 import type { SiteSetting } from '@/types';
@@ -60,7 +61,7 @@ function ColorField({
   );
 }
 
-export function HeroAppearanceSettings() {
+export function HeroAppearanceSettings({ variant = 'panel' }: { variant?: 'panel' | 'compact' }) {
   const { data: settings, isLoading } = useSiteSettings();
   const updateMutation = useUpdateSiteSetting();
   const createMutation = useCreateSiteSetting();
@@ -127,21 +128,8 @@ export function HeroAppearanceSettings() {
   const isSaving = saving || createMutation.isPending || updateMutation.isPending;
   const showColorFields = preset === 'custom' || preset === 'light' || preset === 'navy' || preset === 'gold';
 
-  return (
-    <SettingsPanel
-      icon={Palette}
-      title="Hero appearance"
-      description="Calibrate homepage hero colors — background, text, accents, and image overlay."
-      footer={
-        <>
-          <Button type="submit" form="hero-appearance-form" isLoading={isSaving} size="sm">
-            Save appearance
-          </Button>
-          <SaveFeedback saved={saved} isSaving={isSaving} />
-        </>
-      }
-    >
-      <form id="hero-appearance-form" onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
+  const form = (
+    <form id="hero-appearance-form" onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
         <div className="space-y-1.5">
           <label htmlFor="hero_theme_preset" className="text-sm font-medium text-slate-700">
             Color preset
@@ -236,6 +224,37 @@ export function HeroAppearanceSettings() {
           </div>
         </div>
       </form>
+  );
+
+  if (variant === 'compact') {
+    return (
+      <CompactSettingsSection
+        title="Hero appearance"
+        description="Colors, overlay strength, and live preview."
+        formId="hero-appearance-form"
+        isSaving={isSaving}
+        saved={saved}
+      >
+        {form}
+      </CompactSettingsSection>
+    );
+  }
+
+  return (
+    <SettingsPanel
+      icon={Palette}
+      title="Hero appearance"
+      description="Calibrate homepage hero colors — background, text, accents, and image overlay."
+      footer={
+        <>
+          <Button type="submit" form="hero-appearance-form" isLoading={isSaving} size="sm">
+            Save appearance
+          </Button>
+          <SaveFeedback saved={saved} isSaving={isSaving} />
+        </>
+      }
+    >
+      {form}
     </SettingsPanel>
   );
 }

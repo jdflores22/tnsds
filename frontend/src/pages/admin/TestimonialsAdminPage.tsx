@@ -3,6 +3,7 @@ import {
   useCreateTestimonial,
   useUpdateTestimonial,
   useDeleteTestimonial,
+  useReorderTestimonials,
 } from '@/api/hooks';
 import type { Testimonial } from '@/types';
 import { AdminCrudPage } from '@/components/admin/AdminCrudPage';
@@ -14,6 +15,7 @@ export default function TestimonialsAdminPage() {
   const createMutation = useCreateTestimonial();
   const updateMutation = useUpdateTestimonial();
   const deleteMutation = useDeleteTestimonial();
+  const reorderMutation = useReorderTestimonials();
 
   return (
     <AdminCrudPage<Testimonial>
@@ -34,6 +36,8 @@ export default function TestimonialsAdminPage() {
           ),
         },
       ]}
+      onReorder={(ordered) => reorderMutation.mutateAsync(ordered)}
+      isReordering={reorderMutation.isPending}
       onDelete={(id) => deleteMutation.mutateAsync(id)}
       formContent={(item, onClose) => (
         <EntityForm

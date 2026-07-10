@@ -1,5 +1,20 @@
-import { useMemo, useState, type ReactNode } from 'react';
-import { Inbox, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsUpDown,
+  ChevronUp,
+  GripVertical,
+  Inbox,
+  ListOrdered,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react';
 import {
   AdminCard,
   AdminCardBody,
@@ -13,11 +28,16 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { PageLoader } from '@/components/ui/Spinner';
 import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/Table';
+import { cn } from '@/utils/cn';
 
 export interface AdminColumn<T> {
   key: string;
   label: string;
   render?: (item: T) => ReactNode;
+  /** Enable clicking the header to sort by this column. Defaults to true. */
+  sortable?: boolean;
+  /** Custom comparable value; falls back to item[key]. */
+  sortValue?: (item: T) => string | number;
 }
 
 export interface AdminCrudPageProps<T extends { id: string }> {
@@ -32,7 +52,21 @@ export interface AdminCrudPageProps<T extends { id: string }> {
   searchPlaceholder?: string;
   deleteTitle?: string;
   getDeleteItemName?: (item: T) => string;
+  /** Page size for the table. Defaults to 10. */
+  pageSize?: number;
+  /** When provided, enables a drag-to-reorder mode that persists via this handler. */
+  onReorder?: (orderedItems: T[]) => Promise<void> | void;
+  /** True while a reorder is being saved. */
+  isReordering?: boolean;
+  /** When provided with publishable items, enables bulk publish / unpublish. */
+  onBulkSetPublished?: (ids: string[], isPublished: boolean) => Promise<void> | void;
+  isBulkUpdating?: boolean;
 }
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50];
+
+type StatusFilter = 'all' | 'published' | 'draft';
+type SortDir = 'asc' | 'desc';
 
 function itemMatchesSearch<T extends { id: string }>(
   item: T,
@@ -55,6 +89,124 @@ function defaultDeleteItemName<T>(item: T, columns: AdminColumn<T>[]): string {
   return 'this record';
 }
 
+function comparableValue<T extends { id: string }>(item: T, col: AdminColumn<T>): string | number {
+  if (col.sortValue) return col.sortValue(item);
+  const raw = (item as Record<string, unknown>)[col.key];
+  if (typeof raw === 'number') return raw;
+  if (raw == null) return '';
+  return String(raw).toLowerCase();
+}
+
+interface ReorderListProps<T extends { id: string }> {
+  items: T[];
+  columns: AdminColumn<T>[];
+  isSaving?: boolean;
+  onCancel: () => void;
+  onSave: (ordered: T[]) => void;
+}
+
+function ReorderList<T extends { id: string }>({
+  items,
+  columns,
+  isSaving,
+  onCancel,
+  onSave,
+}: ReorderListProps<T>) {
+  const [order, setOrder] = useState<T[]>(items);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
+  // Prefer a human-readable text column for the label (skip image/media columns).
+  const isMediaKey = (key: string) => /url|image|json|logo|icon|avatar/i.test(key);
+  const textColumns = columns.filter((c) => !isMediaKey(c.key));
+  const primary = textColumns[0] ?? columns[0];
+  const secondary = textColumns.find((c) => c.key !== primary.key);
+
+  const move = (from: number, to: number) => {
+    if (from === to) return;
+    setOrder((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  };
+
+  const label = (item: T, col?: AdminColumn<T>) => {
+    if (!col) return null;
+    return col.render ? col.render(item) : String((item as Record<string, unknown>)[col.key] ?? '');
+  };
+
+  return (
+    <div className="p-4 sm:p-6">
+      <p className="mb-4 text-sm text-slate-500">
+        Drag rows to change their order, then save. Order controls how items appear on the site.
+      </p>
+      <ul className="space-y-2">
+        {order.map((item, index) => (
+          <li
+            key={item.id}
+            draggable
+            onDragStart={() => setDragIndex(index)}
+            onDragEnter={() => setOverIndex(index)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => {
+              if (dragIndex !== null) move(dragIndex, index);
+              setDragIndex(null);
+              setOverIndex(null);
+            }}
+            onDragEnd={() => {
+              setDragIndex(null);
+              setOverIndex(null);
+            }}
+            className={cn(
+              'flex cursor-grab items-center gap-3 rounded-lg border bg-white px-3 py-2.5 transition-all active:cursor-grabbing',
+              dragIndex === index
+                ? 'border-brand-gold-400 opacity-60 shadow-md'
+                : overIndex === index
+                  ? 'border-brand-gold-400/60 bg-brand-gold-500/5'
+                  : 'border-slate-200 hover:border-slate-300',
+            )}
+          >
+            <GripVertical className="h-4 w-4 shrink-0 text-slate-400" />
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-xs font-semibold tabular-nums text-slate-500">
+              {index + 1}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium text-primary-900">
+                {label(item, primary)}
+              </span>
+              {secondary && (
+                <span className="block truncate text-xs text-slate-400">
+                  {label(item, secondary)}
+                </span>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-5 flex justify-end gap-2 border-t border-slate-100 pt-4">
+        <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
+          <X className="h-4 w-4" />
+          Cancel
+        </Button>
+        <Button size="sm" onClick={() => onSave(order)} isLoading={isSaving}>
+          <Check className="h-4 w-4" />
+          Save order
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function bySortOrder<T extends { id: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    const av = Number((a as Record<string, unknown>).sortOrder ?? 0);
+    const bv = Number((b as Record<string, unknown>).sortOrder ?? 0);
+    return av - bv;
+  });
+}
+
 export function AdminCrudPage<T extends { id: string }>({
   title,
   description,
@@ -67,11 +219,28 @@ export function AdminCrudPage<T extends { id: string }>({
   searchPlaceholder = 'Search records…',
   deleteTitle,
   getDeleteItemName,
+  pageSize: initialPageSize = 10,
+  onReorder,
+  isReordering,
+  onBulkSetPublished,
+  isBulkUpdating,
 }: AdminCrudPageProps<T>) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<T | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(initialPageSize);
+  const [reorderMode, setReorderMode] = useState(false);
+
+  const hasStatus = useMemo(
+    () => (items?.length ? 'isPublished' in (items[0] as Record<string, unknown>) : false),
+    [items],
+  );
 
   const openCreate = () => {
     setEditing(null);
@@ -88,11 +257,79 @@ export function AdminCrudPage<T extends { id: string }>({
     setEditing(null);
   };
 
+  const toggleSort = (col: AdminColumn<T>) => {
+    if (col.sortable === false) return;
+    if (sortKey === col.key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(col.key);
+      setSortDir('asc');
+    }
+  };
+
   const filtered = useMemo(() => {
-    const list = items ?? [];
-    if (!search.trim()) return list;
-    return list.filter((item) => itemMatchesSearch(item, columns, search));
-  }, [items, columns, search]);
+    let list = items ?? [];
+    if (statusFilter !== 'all') {
+      const wantPublished = statusFilter === 'published';
+      list = list.filter(
+        (item) => Boolean((item as Record<string, unknown>).isPublished) === wantPublished,
+      );
+    }
+    if (search.trim()) {
+      list = list.filter((item) => itemMatchesSearch(item, columns, search));
+    }
+    if (sortKey) {
+      const col = columns.find((c) => c.key === sortKey);
+      if (col) {
+        list = [...list].sort((a, b) => {
+          const av = comparableValue(a, col);
+          const bv = comparableValue(b, col);
+          if (av < bv) return sortDir === 'asc' ? -1 : 1;
+          if (av > bv) return sortDir === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+    }
+    return list;
+  }, [items, columns, search, statusFilter, sortKey, sortDir]);
+
+  // Reset to first page whenever the result set changes shape.
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, sortKey, sortDir, pageSize]);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [items, search, statusFilter]);
+
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const start = (currentPage - 1) * pageSize;
+  const paged = filtered.slice(start, start + pageSize);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === paged.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(paged.map((item) => item.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const runBulkPublish = async (isPublished: boolean) => {
+    if (!onBulkSetPublished || selectedIds.size === 0) return;
+    await onBulkSetPublished([...selectedIds], isPublished);
+    setSelectedIds(new Set());
+  };
 
   if (isLoading) return <PageLoader />;
 
@@ -105,38 +342,99 @@ export function AdminCrudPage<T extends { id: string }>({
         title={title}
         description={description}
         actions={
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4" />
-            {createLabel}
-          </Button>
+          <>
+            {onReorder && count > 1 && !reorderMode && (
+              <Button variant="outline" onClick={() => setReorderMode(true)}>
+                <ListOrdered className="h-4 w-4" />
+                Reorder
+              </Button>
+            )}
+            {!reorderMode && (
+              <Button onClick={openCreate}>
+                <Plus className="h-4 w-4" />
+                {createLabel}
+              </Button>
+            )}
+          </>
         }
       />
 
+      {reorderMode && onReorder ? (
+        <AdminCard accent="gold">
+          <ReorderList
+            items={bySortOrder(items ?? [])}
+            columns={columns}
+            isSaving={isReordering}
+            onCancel={() => setReorderMode(false)}
+            onSave={async (ordered) => {
+              await onReorder(ordered);
+              setReorderMode(false);
+            }}
+          />
+        </AdminCard>
+      ) : (
       <AdminCard accent="navy">
         <AdminCardToolbar>
           <p className="text-sm text-slate-500">
             <span className="font-medium tabular-nums text-primary-900">{count}</span>{' '}
             {count === 1 ? 'record' : 'records'}
-            {search && (
-              <span className="text-slate-400">
-                {' '}
-                · {filtered.length} shown
-              </span>
+            {(search || statusFilter !== 'all') && (
+              <span className="text-slate-400"> · {total} shown</span>
             )}
           </p>
-          {count > 0 && (
-            <div className="relative w-full sm:w-64">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                type="search"
-                placeholder={searchPlaceholder}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-                aria-label="Search records"
-              />
-            </div>
-          )}
+
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            {hasStatus && onBulkSetPublished && selectedIds.size > 0 && (
+              <>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  isLoading={isBulkUpdating}
+                  onClick={() => void runBulkPublish(true)}
+                >
+                  Publish ({selectedIds.size})
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  isLoading={isBulkUpdating}
+                  onClick={() => void runBulkPublish(false)}
+                >
+                  Unpublish ({selectedIds.size})
+                </Button>
+              </>
+            )}
+            {hasStatus && (
+              <div className="relative">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                  className="h-10 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-sm text-primary-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  aria-label="Filter by status"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="published">Published</option>
+                  <option value="draft">Draft</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              </div>
+            )}
+            {count > 0 && (
+              <div className="relative w-full sm:w-64">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  type="search"
+                  placeholder={searchPlaceholder}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                  aria-label="Search records"
+                />
+              </div>
+            )}
+          </div>
         </AdminCardToolbar>
 
         <AdminCardBody className="p-0 sm:p-0">
@@ -152,65 +450,175 @@ export function AdminCrudPage<T extends { id: string }>({
                 </Button>
               }
             />
-          ) : filtered.length === 0 ? (
+          ) : total === 0 ? (
             <AdminEmptyState
               title="No matching records"
-              description={`Try a different search term.`}
+              description="Try a different search term or filter."
               action={
-                <Button variant="outline" size="sm" onClick={() => setSearch('')}>
-                  Clear search
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearch('');
+                    setStatusFilter('all');
+                  }}
+                >
+                  Clear filters
                 </Button>
               }
             />
           ) : (
-            <Table className="rounded-none border-0 shadow-none">
-              <THead>
-                <TR>
-                  {columns.map((col) => (
-                    <TH key={col.key}>{col.label}</TH>
-                  ))}
-                  <TH className="w-28 text-right">Actions</TH>
-                </TR>
-              </THead>
-              <TBody>
-                {filtered.map((item) => (
-                  <TR key={item.id}>
-                    {columns.map((col) => (
-                      <TD key={col.key}>
-                        {col.render
-                          ? col.render(item)
-                          : String((item as Record<string, unknown>)[col.key] ?? '')}
-                      </TD>
-                    ))}
-                    <TD>
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEdit(item)}
-                          aria-label={`Edit ${singular}`}
-                          className="text-primary-700 hover:bg-primary-50"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeleteTarget(item)}
-                          aria-label={`Delete ${singular}`}
-                          className="hover:bg-brand-red-500/10"
-                        >
-                          <Trash2 className="h-4 w-4 text-brand-red-500" />
-                        </Button>
-                      </div>
-                    </TD>
+            <>
+              <Table className="rounded-none border-0 shadow-none">
+                <THead>
+                  <TR>
+                    {hasStatus && onBulkSetPublished && (
+                      <TH className="w-10">
+                        <input
+                          type="checkbox"
+                          checked={paged.length > 0 && selectedIds.size === paged.length}
+                          onChange={toggleSelectAll}
+                          aria-label="Select all on page"
+                          className="h-4 w-4 rounded border-slate-300"
+                        />
+                      </TH>
+                    )}
+                    {columns.map((col) => {
+                      const isSorted = sortKey === col.key;
+                      const sortable = col.sortable !== false;
+                      return (
+                        <TH key={col.key}>
+                          {sortable ? (
+                            <button
+                              type="button"
+                              onClick={() => toggleSort(col)}
+                              className="group inline-flex items-center gap-1.5 transition-colors hover:text-primary-900"
+                            >
+                              {col.label}
+                              {isSorted ? (
+                                sortDir === 'asc' ? (
+                                  <ChevronUp className="h-3.5 w-3.5 text-primary-700" />
+                                ) : (
+                                  <ChevronDown className="h-3.5 w-3.5 text-primary-700" />
+                                )
+                              ) : (
+                                <ChevronsUpDown className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-400" />
+                              )}
+                            </button>
+                          ) : (
+                            col.label
+                          )}
+                        </TH>
+                      );
+                    })}
+                    <TH className="w-28 text-right">Actions</TH>
                   </TR>
-                ))}
-              </TBody>
-            </Table>
+                </THead>
+                <TBody>
+                  {paged.map((item) => (
+                    <TR key={item.id}>
+                      {hasStatus && onBulkSetPublished && (
+                        <TD>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(item.id)}
+                            onChange={() => toggleSelect(item.id)}
+                            aria-label={`Select ${singular}`}
+                            className="h-4 w-4 rounded border-slate-300"
+                          />
+                        </TD>
+                      )}
+                      {columns.map((col) => (
+                        <TD key={col.key}>
+                          {col.render
+                            ? col.render(item)
+                            : String((item as Record<string, unknown>)[col.key] ?? '')}
+                        </TD>
+                      ))}
+                      <TD>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEdit(item)}
+                            aria-label={`Edit ${singular}`}
+                            className="text-primary-700 hover:bg-primary-50"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleteTarget(item)}
+                            aria-label={`Delete ${singular}`}
+                            className="hover:bg-brand-red-500/10"
+                          >
+                            <Trash2 className="h-4 w-4 text-brand-red-500" />
+                          </Button>
+                        </div>
+                      </TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+
+              {total > pageSize && (
+                <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 sm:flex-row sm:px-6">
+                  <p className="text-xs text-slate-500">
+                    Showing{' '}
+                    <span className="font-medium tabular-nums text-primary-900">{start + 1}</span>–
+                    <span className="font-medium tabular-nums text-primary-900">
+                      {Math.min(start + pageSize, total)}
+                    </span>{' '}
+                    of <span className="font-medium tabular-nums text-primary-900">{total}</span>
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <select
+                        value={pageSize}
+                        onChange={(e) => setPageSize(Number(e.target.value))}
+                        className="h-8 appearance-none rounded-lg border border-slate-200 bg-white pl-2.5 pr-7 text-xs text-slate-600 focus:border-primary-500 focus:outline-none"
+                        aria-label="Rows per page"
+                      >
+                        {PAGE_SIZE_OPTIONS.map((size) => (
+                          <option key={size} value={size}>
+                            {size} / page
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage <= 1}
+                        aria-label="Previous page"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="px-2 text-xs tabular-nums text-slate-500">
+                        {currentPage} / {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage >= totalPages}
+                        aria-label="Next page"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </AdminCardBody>
       </AdminCard>
+      )}
 
       <Modal
         isOpen={modalOpen}

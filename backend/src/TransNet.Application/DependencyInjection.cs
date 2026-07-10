@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<ISiteSettingService, SiteSettingService>();
         services.AddScoped<ISeoSettingService, SeoSettingService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IActivityLogService, ActivityLogService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoleService, RoleService>();
 

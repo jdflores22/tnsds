@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
-import { ImageIcon, Trash2, Upload } from 'lucide-react';
+import { FolderOpen, ImageIcon, Trash2, Upload } from 'lucide-react';
 import apiClient from '@/api/client';
+import { MediaPickerModal } from '@/components/admin/MediaPickerModal';
 import { Button } from '@/components/ui/Button';
 import { resolveMediaUrl } from '@/utils/media';
 import { cn } from '@/utils/cn';
@@ -28,6 +29,7 @@ export function ImageUploadField({
 }: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
@@ -58,16 +60,27 @@ export function ImageUploadField({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <label className="text-sm font-medium text-slate-700">{label}</label>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          isLoading={uploading}
-          onClick={() => inputRef.current?.click()}
-        >
-          <Upload className="mr-1.5 h-3.5 w-3.5" />
-          {uploadLabel}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setPickerOpen(true)}
+          >
+            <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
+            Library
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            isLoading={uploading}
+            onClick={() => inputRef.current?.click()}
+          >
+            <Upload className="mr-1.5 h-3.5 w-3.5" />
+            {uploadLabel}
+          </Button>
+        </div>
       </div>
 
       <input
@@ -123,6 +136,13 @@ export function ImageUploadField({
           ))}
         </div>
       )}
+
+      <MediaPickerModal
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(url) => onChange(multiple ? [...value, url] : [url])}
+        folder={folder}
+      />
     </div>
   );
 }

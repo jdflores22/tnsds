@@ -3,6 +3,7 @@ import {
   useCreateProcessStep,
   useUpdateProcessStep,
   useDeleteProcessStep,
+  useReorderProcessSteps,
 } from '@/api/hooks';
 import type { ProcessStep } from '@/types';
 import { AdminCrudPage } from '@/components/admin/AdminCrudPage';
@@ -13,6 +14,7 @@ export default function ProcessStepsAdminPage() {
   const createMutation = useCreateProcessStep();
   const updateMutation = useUpdateProcessStep();
   const deleteMutation = useDeleteProcessStep();
+  const reorderMutation = useReorderProcessSteps();
 
   return (
     <AdminCrudPage<ProcessStep>
@@ -27,6 +29,8 @@ export default function ProcessStepsAdminPage() {
         { key: 'title', label: 'Title' },
         { key: 'sortOrder', label: 'Order' },
       ]}
+      onReorder={(ordered) => reorderMutation.mutateAsync(ordered)}
+      isReordering={reorderMutation.isPending}
       onDelete={(id) => deleteMutation.mutateAsync(id)}
       formContent={(item, onClose) => (
         <EntityForm

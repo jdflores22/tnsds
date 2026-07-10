@@ -3,6 +3,7 @@ import {
   useCreateFaqItem,
   useUpdateFaqItem,
   useDeleteFaqItem,
+  useReorderFaqItems,
 } from '@/api/hooks';
 import type { FaqItem } from '@/types';
 import { AdminCrudPage } from '@/components/admin/AdminCrudPage';
@@ -13,6 +14,7 @@ export default function FaqAdminPage() {
   const createMutation = useCreateFaqItem();
   const updateMutation = useUpdateFaqItem();
   const deleteMutation = useDeleteFaqItem();
+  const reorderMutation = useReorderFaqItems();
 
   return (
     <AdminCrudPage<FaqItem>
@@ -26,6 +28,8 @@ export default function FaqAdminPage() {
         { key: 'question', label: 'Question' },
         { key: 'sortOrder', label: 'Order' },
       ]}
+      onReorder={(ordered) => reorderMutation.mutateAsync(ordered)}
+      isReordering={reorderMutation.isPending}
       onDelete={(id) => deleteMutation.mutateAsync(id)}
       formContent={(item, onClose) => (
         <EntityForm

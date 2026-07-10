@@ -3,6 +3,7 @@ import {
   useCreateCompanyHighlight,
   useUpdateCompanyHighlight,
   useDeleteCompanyHighlight,
+  useReorderCompanyHighlights,
 } from '@/api/hooks';
 import type { CompanyHighlight } from '@/types';
 import { AdminCrudPage } from '@/components/admin/AdminCrudPage';
@@ -13,6 +14,7 @@ export default function CompanyHighlightsAdminPage() {
   const createMutation = useCreateCompanyHighlight();
   const updateMutation = useUpdateCompanyHighlight();
   const deleteMutation = useDeleteCompanyHighlight();
+  const reorderMutation = useReorderCompanyHighlights();
 
   return (
     <AdminCrudPage<CompanyHighlight>
@@ -27,6 +29,8 @@ export default function CompanyHighlightsAdminPage() {
         { key: 'description', label: 'Description' },
         { key: 'sortOrder', label: 'Order' },
       ]}
+      onReorder={(ordered) => reorderMutation.mutateAsync(ordered)}
+      isReordering={reorderMutation.isPending}
       onDelete={(id) => deleteMutation.mutateAsync(id)}
       formContent={(item, onClose) => (
         <EntityForm

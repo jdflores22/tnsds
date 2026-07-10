@@ -1,9 +1,10 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { usePortfolioItem } from '@/api/hooks';
+import { ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { usePortfolio, usePortfolioItem } from '@/api/hooks';
 import { SEOHead } from '@/components/common/SEOHead';
 import { Container } from '@/components/common/Container';
 import { Badge } from '@/components/ui/Badge';
+import { Card, CardBody } from '@/components/ui/Card';
 import { PageLoader } from '@/components/ui/Spinner';
 import { parsePortfolioImages, parseTechStack } from '@/utils/portfolio';
 import { resolveMediaUrl } from '@/utils/media';
@@ -11,6 +12,7 @@ import { resolveMediaUrl } from '@/utils/media';
 export default function PortfolioDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: item, isLoading, isError } = usePortfolioItem(slug || '');
+  const { data: allItems } = usePortfolio();
 
   if (isLoading) return <PageLoader />;
   if (isError || !item) {
@@ -28,6 +30,11 @@ export default function PortfolioDetailPage() {
   const images = parsePortfolioImages(item.imagesJson);
   const coverImage = images[0];
   const galleryImages = images.slice(1);
+  const related = (allItems ?? [])
+    .filter((p) => p.id !== item.id && p.isPublished)
+    .slice(0, 3);
+
+  const hasHtmlContent = item.content?.trim().startsWith('<');
 
   return (
     <>
@@ -98,33 +105,87 @@ export default function PortfolioDetailPage() {
       )}
 
       <Container className="py-16">
-        <div className="mx-auto max-w-3xl">
-          {techStack.length > 0 && (
-            <div className="mb-8 flex flex-wrap gap-2">
-              {techStack.map((tech) => (
-                <Badge key={tech}>{tech}</Badge>
-              ))}
-            </div>
-          )}
-
-          {galleryImages.length > 0 && (
-            <div className="mb-10 grid gap-4 sm:grid-cols-2">
-              {galleryImages.map((src) => (
-                <img
-                  key={src}
-                  src={src}
-                  alt=""
-                  className="rounded-lg border border-slate-200 object-cover"
-                  loading="lazy"
-                />
-              ))}
-            </div>
-          )}
-
-          <div className="prose prose-slate max-w-none whitespace-pre-wrap text-slate-700">
-            {item.content || item.description}
+        {techStack.length > 0 && (
+          <div className="mb-10 flex flex-wrap gap-2">
+            {techStack.map((tech) => (
+              <Badge key={tech}>{tech}</Badge>
+            ))}
           </div>
+        )}
+
+        <div className="grid gap-8 lg:grid-cols-3">
+          <section className="rounded-2xl border border-slate-200 bg-slate-50 p-6 lg:col-span-1">
+            <p className="text-xs font-semibold uppercase tracking-widest text-brand-gold-600">Challenge</p>
+            <p className="mt-3 text-sm leading-relaxed text-slate-700">
+              {item.description || 'Client needed a reliable partner to deliver measurable outcomes on a complex initiative.'}
+            </p>
+          </section>
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 lg:col-span-2">
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary-700">Solution</p>
+            {hasHtmlContent ? (
+              <div
+                className="prose prose-slate mt-3 max-w-none prose-p:text-slate-700"
+                dangerouslySetInnerHTML={{ __html: item.content }}
+              />
+            ) : (
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                {item.content || item.description}
+              </p>
+            )}
+          </section>
         </div>
+
+        {techStack.length > 0 && (
+          <section className="mt-8 rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 to-white p-6">
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary-700">Results & delivery</p>
+            <p className="mt-3 text-sm text-slate-600">
+              Delivered with a production-ready stack and practices aligned to the client&apos;s operational goals.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {techStack.map((tech) => (
+                <Badge key={tech} variant="accent">{tech}</Badge>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {galleryImages.length > 0 && (
+          <div className="mt-12 grid gap-4 sm:grid-cols-2">
+            {galleryImages.map((src) => (
+              <img
+                key={src}
+                src={src}
+                alt=""
+                className="rounded-xl border border-slate-200 object-cover shadow-sm"
+                loading="lazy"
+              />
+            ))}
+          </div>
+        )}
+
+        {related.length > 0 && (
+          <section className="mt-16 border-t border-slate-200 pt-12">
+            <h2 className="text-xl font-semibold text-primary-900">Related projects</h2>
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              {related.map((project) => (
+                <Link key={project.id} to={`/portfolio/${project.slug}`} className="group">
+                  <Card className="h-full transition-shadow hover:shadow-md">
+                    <CardBody>
+                      <h3 className="font-semibold text-primary-900 group-hover:text-primary-700">
+                        {project.title}
+                      </h3>
+                      <p className="mt-2 line-clamp-2 text-sm text-slate-600">{project.description}</p>
+                      <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary-800">
+                        View case study
+                        <ArrowUpRight className="h-3 w-3" />
+                      </span>
+                    </CardBody>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </Container>
     </>
   );

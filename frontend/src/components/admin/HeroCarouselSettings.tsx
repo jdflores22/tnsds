@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Spinner } from '@/components/ui/Spinner';
+import { CompactSettingsSection } from '@/components/admin/SettingsTabBar';
 import { SaveFeedback, SettingsPanel } from '@/components/admin/SettingsPanel';
 import { SettingsImageField } from '@/components/admin/SettingsImageField';
 import type { SiteSetting } from '@/types';
@@ -21,7 +22,7 @@ function getValue(settings: SiteSetting[] | undefined, key: string) {
   return settings?.find((s) => s.key === key)?.value ?? '';
 }
 
-export function HeroCarouselSettings() {
+export function HeroCarouselSettings({ variant = 'panel' }: { variant?: 'panel' | 'compact' }) {
   const { data: settings, isLoading } = useSiteSettings();
   const updateMutation = useUpdateSiteSetting();
   const createMutation = useCreateSiteSetting();
@@ -96,21 +97,8 @@ export function HeroCarouselSettings() {
 
   const isSaving = saving || createMutation.isPending || updateMutation.isPending;
 
-  return (
-    <SettingsPanel
-      icon={Layers}
-      title="Hero layout & carousel"
-      description="Use a single static hero or rotate multiple highlight messages in the homepage header."
-      footer={
-        <>
-          <Button type="submit" form="hero-carousel-form" isLoading={isSaving} size="sm">
-            Save hero layout
-          </Button>
-          <SaveFeedback saved={saved} isSaving={isSaving} />
-        </>
-      }
-    >
-      <form id="hero-carousel-form" onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
+  const form = (
+    <form id="hero-carousel-form" onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
         <div className="space-y-1.5">
           <label htmlFor="hero_layout_mode" className="text-sm font-medium text-slate-700">
             Hero layout
@@ -255,12 +243,42 @@ export function HeroCarouselSettings() {
         )}
 
         {layoutMode === 'static' && (
-          <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            Static mode uses the <strong>Hero banner</strong> fields below (headline, description,
-            side panel). Switch to carousel to highlight multiple messages with rotation.
+          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600">
+            Static mode uses <strong>Hero content → Hero banner</strong> fields. Switch to carousel for rotating slides.
           </p>
         )}
       </form>
+  );
+
+  if (variant === 'compact') {
+    return (
+      <CompactSettingsSection
+        title="Hero layout"
+        description="Static headline or rotating carousel slides."
+        formId="hero-carousel-form"
+        isSaving={isSaving}
+        saved={saved}
+      >
+        {form}
+      </CompactSettingsSection>
+    );
+  }
+
+  return (
+    <SettingsPanel
+      icon={Layers}
+      title="Hero layout & carousel"
+      description="Use a single static hero or rotate multiple highlight messages in the homepage header."
+      footer={
+        <>
+          <Button type="submit" form="hero-carousel-form" isLoading={isSaving} size="sm">
+            Save hero layout
+          </Button>
+          <SaveFeedback saved={saved} isSaving={isSaving} />
+        </>
+      }
+    >
+      {form}
     </SettingsPanel>
   );
 }

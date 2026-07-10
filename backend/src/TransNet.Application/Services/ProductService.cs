@@ -27,6 +27,13 @@ public class ProductService : IProductService
         return entity is null ? null : Map(entity);
     }
 
+    public async Task<ProductDto?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        var entity = await QueryExtensions.ApplyPublicFilter(_context.SoftwareProducts, adminView: false)
+            .FirstOrDefaultAsync(p => p.Slug == slug, cancellationToken);
+        return entity is null ? null : Map(entity);
+    }
+
     public async Task<ProductDto> CreateAsync(CreateProductDto dto, CancellationToken cancellationToken = default)
     {
         var entity = new SoftwareProduct
@@ -34,6 +41,9 @@ public class ProductService : IProductService
             Name = dto.Name,
             Slug = dto.Slug ?? SlugHelper.Generate(dto.Name),
             ShortDescription = dto.ShortDescription,
+            Description = dto.Description,
+            FeaturesJson = string.IsNullOrWhiteSpace(dto.FeaturesJson) ? "[]" : dto.FeaturesJson,
+            ScreenshotsJson = string.IsNullOrWhiteSpace(dto.ScreenshotsJson) ? "[]" : dto.ScreenshotsJson,
             LogoUrl = dto.LogoUrl,
             SortOrder = dto.SortOrder,
             IsPublished = dto.IsPublished
@@ -51,6 +61,9 @@ public class ProductService : IProductService
         entity.Name = dto.Name;
         entity.Slug = dto.Slug ?? SlugHelper.Generate(dto.Name);
         entity.ShortDescription = dto.ShortDescription;
+        entity.Description = dto.Description;
+        entity.FeaturesJson = string.IsNullOrWhiteSpace(dto.FeaturesJson) ? "[]" : dto.FeaturesJson;
+        entity.ScreenshotsJson = string.IsNullOrWhiteSpace(dto.ScreenshotsJson) ? "[]" : dto.ScreenshotsJson;
         entity.LogoUrl = dto.LogoUrl;
         entity.SortOrder = dto.SortOrder;
         entity.IsPublished = dto.IsPublished;
@@ -76,6 +89,9 @@ public class ProductService : IProductService
         Name = entity.Name,
         Slug = entity.Slug,
         ShortDescription = entity.ShortDescription,
+        Description = entity.Description,
+        FeaturesJson = entity.FeaturesJson,
+        ScreenshotsJson = entity.ScreenshotsJson,
         LogoUrl = entity.LogoUrl,
         SortOrder = entity.SortOrder,
         IsPublished = entity.IsPublished,

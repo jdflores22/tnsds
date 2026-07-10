@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Layers } from 'lucide-react';
 import { useSiteSettings, useUpdateSiteSetting, useCreateSiteSetting } from '@/api/hooks';
 import {
   ABOUT_SECTION_TOGGLES,
@@ -12,7 +11,7 @@ import {
 import { Spinner } from '@/components/ui/Spinner';
 import { SettingsPanel } from '@/components/admin/SettingsPanel';
 import { SectionToggleSwitch } from '@/components/admin/SectionToggleSwitch';
-import { Badge } from '@/components/ui/Badge';
+import { Layers } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import type { SiteSetting } from '@/types';
 
@@ -29,7 +28,17 @@ function getDarkBg(
   return isSectionEnabledValue(value, defaultDark);
 }
 
-export function SectionVisibilitySettings() {
+type LayoutSection = 'home' | 'about' | 'backgrounds' | 'all';
+
+interface SectionVisibilitySettingsProps {
+  variant?: 'panel' | 'compact';
+  section?: LayoutSection;
+}
+
+export function SectionVisibilitySettings({
+  variant = 'panel',
+  section = 'all',
+}: SectionVisibilitySettingsProps) {
   const { data: settings, isLoading } = useSiteSettings();
   const updateMutation = useUpdateSiteSetting();
   const createMutation = useCreateSiteSetting();
@@ -66,49 +75,97 @@ export function SectionVisibilitySettings() {
 
   const isSaving = updateMutation.isPending || createMutation.isPending;
 
-  const renderGroup = (
-    title: string,
-    description: string,
+  const renderVisibilityRow = (
+    label: string,
+    hint: string | undefined,
+    enabled: boolean,
+    onToggle: () => void,
+    muted?: boolean,
+  ) => (
+    <div
+      className={cn(
+        'flex items-center justify-between gap-3 px-4 py-2',
+        muted && 'bg-slate-50/80',
+      )}
+    >
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-primary-900">{label}</p>
+        {hint && <p className="truncate text-xs text-slate-500">{hint}</p>}
+      </div>
+      <SectionToggleSwitch
+        enabled={enabled}
+        disabled={isSaving}
+        label={label}
+        size="sm"
+        onToggle={onToggle}
+      />
+    </div>
+  );
+
+  const renderVisibilityList = (
     items: typeof HOME_SECTION_TOGGLES | typeof ABOUT_SECTION_TOGGLES,
     group: string,
   ) => (
-    <div className="space-y-3">
-      <div>
-        <h3 className="text-sm font-medium text-primary-900">{title}</h3>
-        <p className="mt-1 text-sm text-slate-500">{description}</p>
-      </div>
-      <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
-        {items.map((item) => {
-          const enabled = getEnabled(settings, item.id);
-          return (
-            <div
-              key={item.id}
-              className={cn(
-                'flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between',
-                !enabled && 'bg-slate-50/80',
-              )}
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium text-primary-900">{item.label}</span>
-                  <Badge variant={enabled ? 'accent' : 'default'}>
-                    {enabled ? 'Visible' : 'Hidden'}
-                  </Badge>
-                </div>
-                <p className="mt-1 text-xs text-slate-500">Content: {item.manageHint}</p>
-              </div>
-              <SectionToggleSwitch
-                enabled={enabled}
-                disabled={isSaving}
-                label={item.label}
-                onToggle={() => void toggleSection(item.id, !enabled, group)}
-              />
-            </div>
-          );
-        })}
-      </div>
+    <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+      {items.map((item) => {
+        const enabled = getEnabled(settings, item.id);
+        return (
+          <div key={item.id}>
+            {renderVisibilityRow(
+              item.label,
+              item.manageHint,
+              enabled,
+              () => void toggleSection(item.id, !enabled, group),
+              !enabled,
+            )}
+          </div>
+        );
+      })}
     </div>
   );
+
+  const renderBackgrounds = () => (
+    <div className="space-y-4">
+      {SECTION_DARK_BG_GROUPS.map((group) => (
+        <div key={group.page}>
+          <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            {group.page}
+          </p>
+          <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+            {group.toggles.map((item) => {
+              const darkBg = getDarkBg(settings, item.id, item.defaultDark);
+              return (
+                <div key={item.id}>
+                  {renderVisibilityRow(
+                    item.label,
+                    darkBg ? 'Navy background' : 'Light background',
+                    darkBg,
+                    () => void toggleDarkBg(item.id, !darkBg),
+                    darkBg,
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const compactBody = (
+    <>
+      {(section === 'home' || section === 'all') && renderVisibilityList(HOME_SECTION_TOGGLES, 'home')}
+      {(section === 'about' || section === 'all') && renderVisibilityList(ABOUT_SECTION_TOGGLES, 'about')}
+      {(section === 'backgrounds' || section === 'all') && renderBackgrounds()}
+      {savedId && (
+        <p className="mt-3 text-xs font-medium text-emerald-600">Updated.</p>
+      )}
+    </>
+  );
+
+  if (variant === 'compact') {
+    return compactBody;
+  }
 
   return (
     <SettingsPanel
@@ -117,63 +174,32 @@ export function SectionVisibilitySettings() {
       description="Show or hide sections and choose navy backgrounds across all public pages."
     >
       <div className="space-y-8">
-        {renderGroup(
-          'Homepage sections',
-          'Toggle sections on the homepage without unpublishing the whole site.',
-          HOME_SECTION_TOGGLES,
-          'home',
-        )}
-        {renderGroup(
-          'About page sections',
-          'Toggle sections on the about page.',
-          ABOUT_SECTION_TOGGLES,
-          'about',
-        )}
-
-        <div className="space-y-6">
+        <div className="space-y-3">
           <div>
-            <h3 className="text-sm font-medium text-primary-900">Section backgrounds (all pages)</h3>
+            <h3 className="text-sm font-medium text-primary-900">Homepage sections</h3>
             <p className="mt-1 text-sm text-slate-500">
-              Enable a navy background (like Our Development Process) for any section on the site.
+              Toggle sections on the homepage without unpublishing the whole site.
             </p>
           </div>
+          {renderVisibilityList(HOME_SECTION_TOGGLES, 'home')}
+        </div>
 
-          {SECTION_DARK_BG_GROUPS.map((group) => (
-            <div key={group.page} className="space-y-3">
-              <h4 className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-700">
-                {group.page}
-              </h4>
-              <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
-                {group.toggles.map((item) => {
-                  const darkBg = getDarkBg(settings, item.id, item.defaultDark);
-                  return (
-                    <div
-                      key={item.id}
-                      className={cn(
-                        'flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between',
-                        darkBg && 'bg-primary-950/5',
-                      )}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium text-primary-900">{item.label}</span>
-                          <Badge variant={darkBg ? 'accent' : 'default'}>
-                            {darkBg ? 'Navy background' : 'Light background'}
-                          </Badge>
-                        </div>
-                      </div>
-                      <SectionToggleSwitch
-                        enabled={darkBg}
-                        disabled={isSaving}
-                        label={`${item.label} dark background`}
-                        onToggle={() => void toggleDarkBg(item.id, !darkBg)}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-sm font-medium text-primary-900">About page sections</h3>
+            <p className="mt-1 text-sm text-slate-500">Toggle sections on the about page.</p>
+          </div>
+          {renderVisibilityList(ABOUT_SECTION_TOGGLES, 'about')}
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-sm font-medium text-primary-900">Section backgrounds</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Enable a navy background for any section on the site.
+            </p>
+          </div>
+          {renderBackgrounds()}
         </div>
       </div>
       {savedId && (

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
-import { ImageIcon, Upload } from 'lucide-react';
+import { FolderOpen, ImageIcon, Upload } from 'lucide-react';
 import apiClient from '@/api/client';
+import { MediaPickerModal } from '@/components/admin/MediaPickerModal';
 import { Button } from '@/components/ui/Button';
 import { resolveMediaUrl } from '@/utils/media';
 
@@ -21,6 +22,7 @@ export function SettingsImageField({
 }: SettingsImageFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
@@ -48,12 +50,16 @@ export function SettingsImageField({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <label className="text-sm font-medium text-slate-700">{label}</label>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {value && (
             <Button type="button" variant="outline" size="sm" onClick={() => onChange('')}>
               Remove
             </Button>
           )}
+          <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+            <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
+            Library
+          </Button>
           <Button
             type="button"
             variant="outline"
@@ -90,10 +96,17 @@ export function SettingsImageField({
         <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50">
           <div className="text-center text-slate-400">
             <ImageIcon className="mx-auto h-7 w-7" />
-            <p className="mt-1.5 text-xs">No image set</p>
+            <p className="mt-1.5 text-xs">No image set — upload or pick from library</p>
           </div>
         </div>
       )}
+
+      <MediaPickerModal
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={onChange}
+        folder={folder}
+      />
     </div>
   );
 }

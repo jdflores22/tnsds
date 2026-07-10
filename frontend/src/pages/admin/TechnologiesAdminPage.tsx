@@ -3,6 +3,7 @@ import {
   useCreateTechnology,
   useUpdateTechnology,
   useDeleteTechnology,
+  useReorderTechnologies,
 } from '@/api/hooks';
 import type { Technology } from '@/types';
 import { AdminCrudPage } from '@/components/admin/AdminCrudPage';
@@ -15,6 +16,7 @@ export default function TechnologiesAdminPage() {
   const createMutation = useCreateTechnology();
   const updateMutation = useUpdateTechnology();
   const deleteMutation = useDeleteTechnology();
+  const reorderMutation = useReorderTechnologies();
 
   return (
     <AdminCrudPage<Technology>
@@ -55,6 +57,8 @@ export default function TechnologiesAdminPage() {
             ),
         },
       ]}
+      onReorder={(ordered) => reorderMutation.mutateAsync(ordered)}
+      isReordering={reorderMutation.isPending}
       onDelete={(id) => deleteMutation.mutateAsync(id)}
       formContent={(item, onClose) => (
         <TechnologyForm

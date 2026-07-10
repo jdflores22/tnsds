@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Spinner } from '@/components/ui/Spinner';
+import { CompactSettingsSection } from '@/components/admin/SettingsTabBar';
 import { SaveFeedback, SettingsPanel } from '@/components/admin/SettingsPanel';
 import type { SiteSetting } from '@/types';
 
@@ -21,7 +22,7 @@ function getValue(settings: SiteSetting[] | undefined, key: string) {
 
 const MAX_CARDS = 3;
 
-export function HeroHighlightsSettings() {
+export function HeroHighlightsSettings({ variant = 'panel' }: { variant?: 'panel' | 'compact' }) {
   const { data: settings, isLoading } = useSiteSettings();
   const updateMutation = useUpdateSiteSetting();
   const createMutation = useCreateSiteSetting();
@@ -115,21 +116,8 @@ export function HeroHighlightsSettings() {
   const isSaving = saving || createMutation.isPending || updateMutation.isPending;
   const sectionHidden = !enabled || cards.length === 0;
 
-  return (
-    <SettingsPanel
-      icon={LayoutGrid}
-      title="Hero highlight cards"
-      description="Optional cards below the hero. Remove all to hide this section on the homepage."
-      footer={
-        <>
-          <Button type="submit" form="hero-highlights-form" isLoading={isSaving} size="sm">
-            Save highlight cards
-          </Button>
-          <SaveFeedback saved={saved} isSaving={isSaving} />
-        </>
-      }
-    >
-      <form id="hero-highlights-form" onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+  const form = (
+    <form id="hero-highlights-form" onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
           <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
             <input
@@ -241,6 +229,37 @@ export function HeroHighlightsSettings() {
           </Button>
         )}
       </form>
+  );
+
+  if (variant === 'compact') {
+    return (
+      <CompactSettingsSection
+        title="Highlight cards"
+        description="Optional cards below the hero. Remove all to hide on the homepage."
+        formId="hero-highlights-form"
+        isSaving={isSaving}
+        saved={saved}
+      >
+        {form}
+      </CompactSettingsSection>
+    );
+  }
+
+  return (
+    <SettingsPanel
+      icon={LayoutGrid}
+      title="Hero highlight cards"
+      description="Optional cards below the hero. Remove all to hide this section on the homepage."
+      footer={
+        <>
+          <Button type="submit" form="hero-highlights-form" isLoading={isSaving} size="sm">
+            Save highlight cards
+          </Button>
+          <SaveFeedback saved={saved} isSaving={isSaving} />
+        </>
+      }
+    >
+      {form}
     </SettingsPanel>
   );
 }

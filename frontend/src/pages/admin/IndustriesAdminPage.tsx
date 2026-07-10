@@ -3,6 +3,7 @@ import {
   useCreateIndustry,
   useUpdateIndustry,
   useDeleteIndustry,
+  useReorderIndustries,
 } from '@/api/hooks';
 import type { Industry } from '@/types';
 import { AdminCrudPage } from '@/components/admin/AdminCrudPage';
@@ -15,6 +16,7 @@ export default function IndustriesAdminPage() {
   const createMutation = useCreateIndustry();
   const updateMutation = useUpdateIndustry();
   const deleteMutation = useDeleteIndustry();
+  const reorderMutation = useReorderIndustries();
 
   return (
     <AdminCrudPage<Industry>
@@ -55,6 +57,8 @@ export default function IndustriesAdminPage() {
             ),
         },
       ]}
+      onReorder={(ordered) => reorderMutation.mutateAsync(ordered)}
+      isReordering={reorderMutation.isPending}
       onDelete={(id) => deleteMutation.mutateAsync(id)}
       formContent={(item, onClose) => (
         <IndustryForm

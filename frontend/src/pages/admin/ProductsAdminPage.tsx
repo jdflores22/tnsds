@@ -3,6 +3,7 @@ import {
   useCreateProduct,
   useUpdateProduct,
   useDeleteProduct,
+  useReorderProducts,
 } from '@/api/hooks';
 import type { SoftwareProduct } from '@/types';
 import { AdminCrudPage } from '@/components/admin/AdminCrudPage';
@@ -15,6 +16,7 @@ export default function ProductsAdminPage() {
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
   const deleteMutation = useDeleteProduct();
+  const reorderMutation = useReorderProducts();
 
   return (
     <AdminCrudPage<SoftwareProduct>
@@ -55,6 +57,14 @@ export default function ProductsAdminPage() {
             ),
         },
       ]}
+      onReorder={(ordered) => reorderMutation.mutateAsync(ordered)}
+      isReordering={reorderMutation.isPending}
+      onBulkSetPublished={async (ids, isPublished) => {
+        await Promise.all(
+          ids.map((id) => updateMutation.mutateAsync({ id, data: { isPublished } })),
+        );
+      }}
+      isBulkUpdating={updateMutation.isPending}
       onDelete={(id) => deleteMutation.mutateAsync(id)}
       formContent={(item, onClose) => (
         <ProductForm

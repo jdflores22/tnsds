@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { LayoutGrid } from 'lucide-react';
+import { ChevronDown, LayoutGrid } from 'lucide-react';
 import { useSiteSettings, useUpdateSiteSetting, useCreateSiteSetting } from '@/api/hooks';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Spinner } from '@/components/ui/Spinner';
 import { SaveFeedback, SettingsPanel } from '@/components/admin/SettingsPanel';
+import { cn } from '@/utils/cn';
 import type { SiteSetting } from '@/types';
 
 /** Matches homepage section order on the live site. */
@@ -135,14 +136,21 @@ function getValue(settings: SiteSetting[] | undefined, key: string) {
 
 type HomepageSectionsSettingsProps = {
   mode?: 'home' | 'pages';
+  variant?: 'panels' | 'compact';
+  compactTab?: 'sections' | 'cta';
 };
 
-export function HomepageSectionsSettings({ mode = 'home' }: HomepageSectionsSettingsProps) {
+export function HomepageSectionsSettings({
+  mode = 'home',
+  variant = 'panels',
+  compactTab = 'sections',
+}: HomepageSectionsSettingsProps) {
   const { data: settings, isLoading } = useSiteSettings();
   const updateMutation = useUpdateSiteSetting();
   const createMutation = useCreateSiteSetting();
   const [savedId, setSavedId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(HOME_SECTIONS[0]?.id ?? PAGE_HEROES[0]?.id ?? null);
 
   const saveField = async (key: string, value: string, group: string) => {
     const existing = settings?.find((s) => s.key === key);
@@ -254,6 +262,130 @@ export function HomepageSectionsSettings({ mode = 'home' }: HomepageSectionsSett
   );
 
   if (showHome) {
+    if (variant === 'compact') {
+      if (compactTab === 'cta') {
+        return (
+          <section className="rounded-lg border border-slate-200 bg-white">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+              <div>
+                <h3 className="text-sm font-semibold text-primary-900">Homepage call-to-action</h3>
+                <p className="text-xs text-slate-500">Bottom banner on the homepage.</p>
+              </div>
+              <Button type="submit" form="homepage-cta-form" isLoading={savingId === 'cta'} size="sm">
+                Save
+              </Button>
+            </div>
+            <div className="p-4">
+              <form
+                id="homepage-cta-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void saveCta(new FormData(e.currentTarget));
+                }}
+                className="grid gap-4 sm:grid-cols-2"
+              >
+                {CTA_FIELDS.map((field) =>
+                  field.type === 'textarea' ? (
+                    <div key={field.key} className="sm:col-span-2">
+                      <Textarea
+                        name={field.key}
+                        label={field.label}
+                        rows={2}
+                        defaultValue={getValue(settings, field.key) || field.default}
+                      />
+                    </div>
+                  ) : (
+                    <Input
+                      key={field.key}
+                      name={field.key}
+                      label={field.label}
+                      defaultValue={getValue(settings, field.key) || field.default}
+                    />
+                  ),
+                )}
+              </form>
+              <SaveFeedback saved={savedId === 'cta'} isSaving={isSaving} />
+            </div>
+          </section>
+        );
+      }
+
+      return (
+        <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+          {HOME_SECTIONS.map((section) => {
+            const isOpen = openId === section.id;
+            const currentTitle =
+              getValue(settings, `${section.id}_title`) || section.defaults.title;
+
+            return (
+              <div key={section.id} className="bg-white">
+                <button
+                  type="button"
+                  onClick={() => setOpenId(isOpen ? null : section.id)}
+                  className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-slate-50/80"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-primary-900">{section.label}</p>
+                    <p className="truncate text-xs text-slate-500">{currentTitle}</p>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      'h-4 w-4 shrink-0 text-slate-400 transition-transform',
+                      isOpen && 'rotate-180',
+                    )}
+                  />
+                </button>
+
+                {isOpen && (
+                  <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-4">
+                    <form
+                      id={`section-form-${section.id}`}
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void saveSection(section.id, new FormData(e.currentTarget), 'home');
+                      }}
+                      className="space-y-3"
+                    >
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Input
+                          name="eyebrow"
+                          label="Eyebrow"
+                          defaultValue={
+                            getValue(settings, `${section.id}_eyebrow`) || section.defaults.eyebrow
+                          }
+                        />
+                        <Input
+                          name="title"
+                          label="Title"
+                          defaultValue={
+                            getValue(settings, `${section.id}_title`) || section.defaults.title
+                          }
+                        />
+                      </div>
+                      <Textarea
+                        name="subtitle"
+                        label="Subtitle"
+                        rows={2}
+                        defaultValue={
+                          getValue(settings, `${section.id}_subtitle`) || section.defaults.subtitle
+                        }
+                      />
+                      <div className="flex items-center gap-2 pt-1">
+                        <Button type="submit" size="sm" isLoading={savingId === section.id}>
+                          Save
+                        </Button>
+                        <SaveFeedback saved={savedId === section.id} isSaving={isSaving} />
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-6">
         <p className="text-sm text-slate-500">
@@ -309,12 +441,95 @@ export function HomepageSectionsSettings({ mode = 'home' }: HomepageSectionsSett
   }
 
   return (
-    <div className="space-y-6">
-      <p className="text-sm text-slate-500">
-        Hero titles and section headings for inner pages. Publish or hide whole pages in the{' '}
-        <strong className="font-medium text-primary-800">Pages</strong> tab.
-      </p>
-      {PAGE_HEROES.map((page) => renderSectionForm(page, 'pages'))}
-    </div>
+    <>
+      {variant === 'compact' ? (
+        <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+          {PAGE_HEROES.map((page) => {
+            const isOpen = openId === page.id;
+            const currentTitle =
+              getValue(settings, `${page.id}_title`) || page.defaults.title;
+
+            return (
+              <div key={page.id} className="bg-white">
+                <button
+                  type="button"
+                  onClick={() => setOpenId(isOpen ? null : page.id)}
+                  className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-slate-50/80"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-primary-900">{page.label}</p>
+                    <p className="truncate text-xs text-slate-500">{currentTitle}</p>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      'h-4 w-4 shrink-0 text-slate-400 transition-transform',
+                      isOpen && 'rotate-180',
+                    )}
+                  />
+                </button>
+
+                {isOpen && (
+                  <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-4">
+                    <form
+                      id={`section-form-${page.id}`}
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void saveSection(page.id, new FormData(e.currentTarget), 'pages');
+                      }}
+                      className="space-y-3"
+                    >
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Input
+                          name="eyebrow"
+                          label="Eyebrow"
+                          defaultValue={
+                            getValue(settings, `${page.id}_eyebrow`) ||
+                            ('eyebrow' in page.defaults ? page.defaults.eyebrow : '')
+                          }
+                        />
+                        <Input
+                          name="title"
+                          label="Title"
+                          defaultValue={
+                            getValue(settings, `${page.id}_title`) || page.defaults.title
+                          }
+                        />
+                      </div>
+                      <Textarea
+                        name="subtitle"
+                        label="Subtitle"
+                        rows={2}
+                        defaultValue={
+                          getValue(settings, `${page.id}_subtitle`) ||
+                          ('subtitle' in page.defaults ? page.defaults.subtitle : '')
+                        }
+                      />
+                      <div className="flex items-center gap-2 pt-1">
+                        <Button
+                          type="submit"
+                          size="sm"
+                          isLoading={savingId === page.id}
+                        >
+                          Save
+                        </Button>
+                        <SaveFeedback saved={savedId === page.id} isSaving={isSaving} />
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <p className="text-sm text-slate-500">
+            Hero titles and section headings for inner pages. Publish or hide whole pages in the{' '}
+            <strong className="font-medium text-primary-800">Pages</strong> tab.
+          </p>
+          {PAGE_HEROES.map((page) => renderSectionForm(page, 'pages'))}
+        </div>
+      )}
+    </>
   );
 }

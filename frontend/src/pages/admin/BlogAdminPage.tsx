@@ -35,6 +35,12 @@ export default function BlogAdminPage() {
         },
       ]}
       onDelete={(id) => deleteMutation.mutateAsync(id)}
+      onBulkSetPublished={async (ids, isPublished) => {
+        await Promise.all(
+          ids.map((id) => updateMutation.mutateAsync({ id, data: { isPublished } })),
+        );
+      }}
+      isBulkUpdating={updateMutation.isPending}
       formContent={(item, onClose) => (
         <EntityForm
           defaultValues={item || { isPublished: true }}
@@ -42,8 +48,8 @@ export default function BlogAdminPage() {
             { name: 'title', label: 'Title' },
             { name: 'slug', label: 'Slug' },
             { name: 'excerpt', label: 'Excerpt', type: 'textarea', rows: 2 },
-            { name: 'content', label: 'Content', type: 'textarea' },
-            { name: 'featuredImageUrl', label: 'Featured Image URL' },
+            { name: 'content', label: 'Content', type: 'richtext' },
+            { name: 'featuredImageUrl', label: 'Featured image', type: 'image', folder: 'pages' },
             { name: 'seoTitle', label: 'SEO Title' },
             { name: 'seoDescription', label: 'SEO Description', type: 'textarea', rows: 2 },
             { name: 'isPublished', label: 'Published', type: 'checkbox' },

@@ -18,6 +18,8 @@ const BlogPage = lazy(() => import('@/pages/Blog/BlogPage'));
 const BlogDetailPage = lazy(() => import('@/pages/Blog/BlogDetailPage'));
 const CareersPage = lazy(() => import('@/pages/Careers/CareersPage'));
 const ContactPage = lazy(() => import('@/pages/Contact/ContactPage'));
+const ProductsPage = lazy(() => import('@/pages/Products/ProductsPage'));
+const ProductDetailPage = lazy(() => import('@/pages/Products/ProductDetailPage'));
 const PrivacyPage = lazy(() => import('@/pages/Privacy/PrivacyPage'));
 const TermsPage = lazy(() => import('@/pages/Terms/TermsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFound/NotFoundPage'));
@@ -42,6 +44,10 @@ const SettingsAdminPage = lazy(() => import('@/pages/admin/SettingsAdminPage'));
 const SeoAdminPage = lazy(() => import('@/pages/admin/SeoAdminPage'));
 const ProjectsAdminPage = lazy(() => import('@/pages/admin/ProjectsAdminPage'));
 const TestimonialsAdminPage = lazy(() => import('@/pages/admin/TestimonialsAdminPage'));
+const MediaLibraryAdminPage = lazy(() => import('@/pages/admin/MediaLibraryAdminPage'));
+const ActivityLogAdminPage = lazy(() => import('@/pages/admin/ActivityLogAdminPage'));
+const SubscribersAdminPage = lazy(() => import('@/pages/admin/SubscribersAdminPage'));
+const JobApplicationsAdminPage = lazy(() => import('@/pages/admin/JobApplicationsAdminPage'));
 
 function LazyPage({ children }: { children: ReactNode }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
@@ -55,6 +61,8 @@ export const router = createBrowserRouter([
       { path: 'about', element: <LazyPage><AboutPage /></LazyPage> },
       { path: 'services', element: <LazyPage><ServicesPage /></LazyPage> },
       { path: 'services/:slug', element: <LazyPage><ServiceDetailPage /></LazyPage> },
+      { path: 'products', element: <LazyPage><ProductsPage /></LazyPage> },
+      { path: 'products/:slug', element: <LazyPage><ProductDetailPage /></LazyPage> },
       { path: 'portfolio', element: <LazyPage><PortfolioPage /></LazyPage> },
       { path: 'portfolio/:slug', element: <LazyPage><PortfolioDetailPage /></LazyPage> },
       { path: 'technologies', element: <LazyPage><TechnologiesPage /></LazyPage> },
@@ -95,8 +103,12 @@ export const router = createBrowserRouter([
       { path: 'testimonials', element: <LazyPage><TestimonialsAdminPage /></LazyPage> },
       { path: 'blog', element: <LazyPage><BlogAdminPage /></LazyPage> },
       { path: 'messages', element: <LazyPage><MessagesAdminPage /></LazyPage> },
+      { path: 'subscribers', element: <LazyPage><SubscribersAdminPage /></LazyPage> },
+      { path: 'applications', element: <LazyPage><JobApplicationsAdminPage /></LazyPage> },
       { path: 'careers', element: <LazyPage><CareersAdminPage /></LazyPage> },
       { path: 'users', element: <LazyPage><UsersAdminPage /></LazyPage> },
+      { path: 'media', element: <LazyPage><MediaLibraryAdminPage /></LazyPage> },
+      { path: 'activity', element: <LazyPage><ActivityLogAdminPage /></LazyPage> },
       { path: 'settings', element: <LazyPage><SettingsAdminPage /></LazyPage> },
       { path: 'seo', element: <LazyPage><SeoAdminPage /></LazyPage> },
       { path: 'projects', element: <LazyPage><ProjectsAdminPage /></LazyPage> },

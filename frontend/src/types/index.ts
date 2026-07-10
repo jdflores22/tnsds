@@ -3,6 +3,14 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
   errors?: string[];
+  meta?: ResponseMeta;
+}
+
+export interface ResponseMeta {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -64,6 +72,9 @@ export interface SoftwareProduct extends BaseEntity {
   name: string;
   slug: string;
   shortDescription: string;
+  description: string;
+  featuresJson: string;
+  screenshotsJson: string;
   logoUrl: string;
   sortOrder: number;
 }
@@ -171,7 +182,8 @@ export interface Career extends BaseEntity {
 export interface JobApplication {
   id: string;
   careerId: string;
-  name: string;
+  careerTitle?: string;
+  fullName: string;
   email: string;
   phone: string;
   resumeUrl: string;
@@ -194,7 +206,8 @@ export interface ContactMessage {
 export interface Subscriber {
   id: string;
   email: string;
-  createdAt: string;
+  subscribedAt: string;
+  isActive: boolean;
 }
 
 export interface Role {
@@ -239,10 +252,19 @@ export interface SeoSetting {
 export interface ActivityLog {
   id: string;
   userId: string;
+  userName: string;
   action: string;
-  entityType: string;
+  entity: string;
   entityId: string;
   details: string;
+  timestamp: string;
+}
+
+export interface MediaFile {
+  url: string;
+  fileName: string;
+  folder: string;
+  sizeBytes: number;
   createdAt: string;
 }
 
@@ -302,7 +324,8 @@ export type CreateTechnology = Omit<Technology, keyof BaseEntity>;
 export type UpdateTechnology = Partial<Omit<Technology, keyof BaseEntity>>;
 
 export type CreateSoftwareProduct = Omit<SoftwareProduct, keyof BaseEntity>;
-export type UpdateSoftwareProduct = Partial<Omit<SoftwareProduct, keyof BaseEntity>>;
+export type UpdateSoftwareProduct = Partial<Omit<SoftwareProduct, keyof BaseEntity>> &
+  Partial<Pick<BaseEntity, 'isPublished'>>;
 export type CreateIndustry = Omit<Industry, keyof BaseEntity>;
 export type UpdateIndustry = Partial<Omit<Industry, keyof BaseEntity>>;
 export type CreateFaqItem = Omit<FaqItem, keyof BaseEntity>;
@@ -318,7 +341,8 @@ export type CreatePortfolio = Omit<Portfolio, keyof BaseEntity | 'client'>;
 export type UpdatePortfolio = Partial<Omit<Portfolio, keyof BaseEntity | 'client'>>;
 
 export type CreateBlog = Omit<Blog, keyof BaseEntity | 'category'>;
-export type UpdateBlog = Partial<Omit<Blog, keyof BaseEntity | 'category'>>;
+export type UpdateBlog = Partial<Omit<Blog, keyof BaseEntity | 'category'>> &
+  Partial<Pick<BaseEntity, 'isPublished'>>;
 
 export type CreateClient = Omit<Client, keyof BaseEntity>;
 export type UpdateClient = Partial<Omit<Client, keyof BaseEntity>>;

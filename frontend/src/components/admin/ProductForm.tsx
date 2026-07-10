@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { ImageUploadField } from '@/components/admin/ImageUploadField';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 
 interface ProductFormProps {
   item?: SoftwareProduct | null;
@@ -16,19 +17,36 @@ interface FormValues {
   name: string;
   slug: string;
   shortDescription: string;
+  description: string;
+  featuresText: string;
   sortOrder: number;
   isPublished: boolean;
   logo: string[];
+  screenshots: string[];
+}
+
+function parseJsonArray(value?: string): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return value.split(',').map((s) => s.trim()).filter(Boolean);
+  }
 }
 
 function toFormValues(item?: SoftwareProduct | null): FormValues {
+  const features = parseJsonArray(item?.featuresJson);
   return {
     name: item?.name ?? '',
     slug: item?.slug ?? '',
     shortDescription: item?.shortDescription ?? '',
+    description: item?.description ?? '',
+    featuresText: features.join('\n'),
     sortOrder: item?.sortOrder ?? 0,
     isPublished: item?.isPublished ?? true,
     logo: item?.logoUrl ? [item.logoUrl] : [],
+    screenshots: parseJsonArray(item?.screenshotsJson),
   };
 }
 
@@ -44,6 +62,14 @@ export function ProductForm({ item, isSubmitting, onCancel, onSubmit }: ProductF
           name: data.name,
           slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-'),
           shortDescription: data.shortDescription,
+          description: data.description,
+          featuresJson: JSON.stringify(
+            data.featuresText
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean),
+          ),
+          screenshotsJson: JSON.stringify(data.screenshots),
           sortOrder: Number(data.sortOrder) || 0,
           isPublished: data.isPublished === true,
           logoUrl: data.logo[0] ?? '',
@@ -57,8 +83,27 @@ export function ProductForm({ item, isSubmitting, onCancel, onSubmit }: ProductF
         label="Short description"
         rows={2}
         {...register('shortDescription')}
-        placeholder="Brief description shown on the homepage"
+        placeholder="Brief description shown on listing cards"
       />
+
+      <Controller
+        name="description"
+        control={control}
+        render={({ field }) => (
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Full description</label>
+            <RichTextEditor value={field.value} onChange={field.onChange} />
+          </div>
+        )}
+      />
+
+      <Textarea
+        label="Key features"
+        rows={5}
+        {...register('featuresText')}
+        placeholder="One feature per line"
+      />
+      <p className="-mt-2 text-xs text-slate-500">Shown in the product detail sidebar.</p>
 
       <Controller
         name="logo"
@@ -73,6 +118,23 @@ export function ProductForm({ item, isSubmitting, onCancel, onSubmit }: ProductF
             preview="logo"
             uploadLabel="Upload logo"
             hint="Logo or icon for this software product (ECMS, CRM, etc.)."
+          />
+        )}
+      />
+
+      <Controller
+        name="screenshots"
+        control={control}
+        render={({ field }) => (
+          <ImageUploadField
+            label="Screenshots"
+            value={field.value}
+            onChange={field.onChange}
+            folder="products"
+            multiple
+            preview="cover"
+            uploadLabel="Upload screenshots"
+            hint="Product UI screenshots for the detail page."
           />
         )}
       />

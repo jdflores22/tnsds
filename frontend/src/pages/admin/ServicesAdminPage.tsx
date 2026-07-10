@@ -3,6 +3,7 @@ import {
   useCreateService,
   useUpdateService,
   useDeleteService,
+  useReorderServices,
 } from '@/api/hooks';
 import type { Service } from '@/types';
 import { AdminCrudPage } from '@/components/admin/AdminCrudPage';
@@ -14,6 +15,7 @@ export default function ServicesAdminPage() {
   const createMutation = useCreateService();
   const updateMutation = useUpdateService();
   const deleteMutation = useDeleteService();
+  const reorderMutation = useReorderServices();
 
   return (
     <AdminCrudPage<Service>
@@ -34,6 +36,8 @@ export default function ServicesAdminPage() {
           ),
         },
       ]}
+      onReorder={(ordered) => reorderMutation.mutateAsync(ordered)}
+      isReordering={reorderMutation.isPending}
       onDelete={(id) => deleteMutation.mutateAsync(id)}
       formContent={(item, onClose) => (
         <EntityForm

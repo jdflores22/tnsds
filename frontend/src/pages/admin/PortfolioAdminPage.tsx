@@ -3,6 +3,7 @@ import {
   useCreatePortfolio,
   useUpdatePortfolio,
   useDeletePortfolio,
+  useReorderPortfolio,
 } from '@/api/hooks';
 import type { Portfolio } from '@/types';
 import { AdminCrudPage } from '@/components/admin/AdminCrudPage';
@@ -16,6 +17,7 @@ export default function PortfolioAdminPage() {
   const createMutation = useCreatePortfolio();
   const updateMutation = useUpdatePortfolio();
   const deleteMutation = useDeletePortfolio();
+  const reorderMutation = useReorderPortfolio();
 
   return (
     <AdminCrudPage<Portfolio>
@@ -58,6 +60,8 @@ export default function PortfolioAdminPage() {
           render: (item) => (item.isFeatured ? <Badge variant="accent">Yes</Badge> : 'No'),
         },
       ]}
+      onReorder={(ordered) => reorderMutation.mutateAsync(ordered)}
+      isReordering={reorderMutation.isPending}
       onDelete={(id) => deleteMutation.mutateAsync(id)}
       formContent={(item, onClose) => (
         <PortfolioForm

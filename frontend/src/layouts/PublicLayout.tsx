@@ -4,6 +4,9 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { PreFooterCTA } from '@/components/marketing/PreFooterCTA';
 import { MaintenancePage } from '@/components/common/MaintenancePage';
+import { StickyCta } from '@/components/common/StickyCta';
+import { AnalyticsScript } from '@/components/common/AnalyticsScript';
+import { OrganizationJsonLd } from '@/components/common/OrganizationJsonLd';
 import { PageLoader } from '@/components/ui/Spinner';
 import { pathnameToPageKey } from '@/constants/pageVisibility';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
@@ -42,6 +45,8 @@ export function PublicLayout() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <OrganizationJsonLd />
+      <AnalyticsScript />
       <Header />
       <motion.main
         className="flex-1"
@@ -55,6 +60,7 @@ export function PublicLayout() {
       </motion.main>
       {pathname !== '/' && <PreFooterCTA />}
       <Footer />
+      <StickyCta />
     </div>
   );
 }

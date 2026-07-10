@@ -7,6 +7,30 @@ import {
 } from '@tanstack/react-query';
 import apiClient, { publicApiClient } from '@/api/client';
 import type { ApiResponse, PaginatedResponse } from '@/types';
+import { toast } from '@/store/toastStore';
+
+/** Turn a resource key like "ProcessSteps" or "site-stats" into "Process step". */
+function humanizeSingular(resource: string): string {
+  const spaced = resource
+    .replace(/[-_]/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .trim()
+    .toLowerCase();
+  const singular = spaced.endsWith('ies')
+    ? `${spaced.slice(0, -3)}y`
+    : spaced.endsWith('s')
+      ? spaced.slice(0, -1)
+      : spaced;
+  return singular.charAt(0).toUpperCase() + singular.slice(1);
+}
+
+function errorMessage(error: unknown): string | undefined {
+  if (error && typeof error === 'object') {
+    const maybe = error as { response?: { data?: { message?: string } }; message?: string };
+    return maybe.response?.data?.message ?? maybe.message;
+  }
+  return undefined;
+}
 
 async function fetchList<T>(
   client: typeof apiClient,
@@ -25,6 +49,7 @@ export function createResourceHooks<T, Create = Partial<T>, Update = Partial<T>>
 ) {
   const path = `/${resource}`;
   const readClient = publicOnly ? publicApiClient : apiClient;
+  const label = humanizeSingular(resource);
 
   const keys = {
     all: [resource] as const,
@@ -86,42 +111,83 @@ export function createResourceHooks<T, Create = Partial<T>, Update = Partial<T>>
     useCreate: (options?: UseMutationOptions<T, Error, Create>) => {
       const queryClient = useQueryClient();
       return useMutation({
+        ...options,
         mutationFn: async (payload: Create) => {
           const { data } = await apiClient.post<ApiResponse<T>>(path, payload);
           return data.data;
         },
         onSuccess: (...args) => {
           queryClient.invalidateQueries({ queryKey: keys.all });
+          toast.success(`${label} created`);
           options?.onSuccess?.(...args);
         },
-        ...options,
+        onError: (error, ...rest) => {
+          toast.error(`Could not create ${label.toLowerCase()}`, errorMessage(error));
+          options?.onError?.(error, ...rest);
+        },
       });
     },
     useUpdate: (options?: UseMutationOptions<T, Error, { id: string; data: Update }>) => {
       const queryClient = useQueryClient();
       return useMutation({
+        ...options,
         mutationFn: async ({ id, data: payload }: { id: string; data: Update }) => {
           const { data } = await apiClient.put<ApiResponse<T>>(`${path}/${id}`, payload);
           return data.data;
         },
         onSuccess: (...args) => {
           queryClient.invalidateQueries({ queryKey: keys.all });
+          toast.success(`${label} updated`);
           options?.onSuccess?.(...args);
         },
-        ...options,
+        onError: (error, ...rest) => {
+          toast.error(`Could not update ${label.toLowerCase()}`, errorMessage(error));
+          options?.onError?.(error, ...rest);
+        },
       });
     },
     useDelete: (options?: UseMutationOptions<void, Error, string>) => {
       const queryClient = useQueryClient();
       return useMutation({
+        ...options,
         mutationFn: async (id: string) => {
           await apiClient.delete(`${path}/${id}`);
         },
         onSuccess: (...args) => {
           queryClient.invalidateQueries({ queryKey: keys.all });
+          toast.success(`${label} deleted`);
           options?.onSuccess?.(...args);
         },
-        ...options,
+        onError: (error, ...rest) => {
+          toast.error(`Could not delete ${label.toLowerCase()}`, errorMessage(error));
+          options?.onError?.(error, ...rest);
+        },
+      });
+    },
+    /**
+     * Persists a new display order by writing each item's array index to its
+     * `sortOrder`. Sends the full object per item (PUT endpoints expect the
+     * complete DTO) and surfaces a single toast instead of one per item.
+     */
+    useReorder: () => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: async (ordered: (T & { id: string; sortOrder?: number })[]) => {
+          await Promise.all(
+            ordered.map((item, index) =>
+              item.sortOrder === index
+                ? Promise.resolve()
+                : apiClient.put(`${path}/${item.id}`, { ...item, sortOrder: index }),
+            ),
+          );
+        },
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: keys.all });
+          toast.success(`${label} order saved`);
+        },
+        onError: (error) => {
+          toast.error(`Could not save ${label.toLowerCase()} order`, errorMessage(error));
+        },
       });
     },
   };
