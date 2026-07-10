@@ -10,7 +10,13 @@ interface ClientLogoMarqueeProps {
 export function ClientLogoMarquee({ clients, className, variant = 'light' }: ClientLogoMarqueeProps) {
   if (clients.length === 0) return null;
 
-  const doubled = [...clients, ...clients];
+  // Repeat the logos until one "lane" is wide enough to fill the viewport, then
+  // render the lane twice. The track animates by -50% so the second lane lands
+  // exactly where the first started — a seamless, gapless infinite loop.
+  const MIN_PER_LANE = 8;
+  const repeats = Math.max(1, Math.ceil(MIN_PER_LANE / clients.length));
+  const lane = Array.from({ length: repeats }, () => clients).flat();
+  const track = [...lane, ...lane];
 
   return (
     <div className={cn('relative overflow-hidden', className)} aria-hidden>
@@ -28,7 +34,7 @@ export function ClientLogoMarquee({ clients, className, variant = 'light' }: Cli
       />
 
       <div className="tech-marquee-track-slow flex w-max items-center gap-10 py-2">
-        {doubled.map((client, i) => (
+        {track.map((client, i) => (
           <div
             key={`${client.id}-${i}`}
             className={cn(

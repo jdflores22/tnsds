@@ -102,10 +102,11 @@ Jwt__AccessTokenExpirationHours=1
 The app binds `Cors:Origins` as a string array, so each origin is its own indexed key:
 
 ```env
-Cors__Origins__0=https://your-frontend.up.railway.app
-Cors__Origins__1=https://www.yourdomain.com
+Cors__Origins__0=https://lightgray-alpaca-580456.hostingersite.com
 ```
 
+> Add one line per front‑end origin. List the origin **without a trailing slash** (scheme + host only). When you attach a custom domain in Hostinger later, add it as `Cors__Origins__1=https://yourdomain.com`.
+>
 > In `Production` the API only allows the origins you list here (unlike Development, which allows any localhost). If the front end can't call the API, a missing/incorrect origin here is the usual cause.
 
 ### Optional — Redis (only if you added a Redis service)
@@ -126,6 +127,51 @@ Smtp__Password=<smtp-pass>
 Smtp__From=noreply@trans-net.com
 Smtp__EnableSsl=true
 ```
+
+### Quick paste — Railway Raw Editor
+
+In the API service → **Variables**, click the **Raw Editor** and paste the block below in one go, then fill in the `<...>` placeholders and your real CORS origins. Delete the Redis/SMTP lines if you aren't using them. Replace `MySQL` / `Redis` if your database services have different names.
+
+```env
+ASPNETCORE_ENVIRONMENT=Production
+ASPNETCORE_URLS=http://0.0.0.0:8080
+PORT=8080
+RAILWAY_DOCKERFILE_PATH=docker/Dockerfile.api
+ConnectionStrings__DefaultConnection=Server=${{MySQL.MYSQLHOST}};Port=${{MySQL.MYSQLPORT}};Database=${{MySQL.MYSQLDATABASE}};User=${{MySQL.MYSQLUSER}};Password=${{MySQL.MYSQLPASSWORD}};
+Jwt__Secret=<your-32+char-access-secret>
+Jwt__RefreshSecret=<your-32+char-refresh-secret>
+Jwt__Issuer=TransNet.API
+Jwt__Audience=TransNet.Client
+Jwt__AccessTokenExpirationHours=1
+Cors__Origins__0=https://lightgray-alpaca-580456.hostingersite.com
+ConnectionStrings__Redis=${{Redis.REDISHOST}}:${{Redis.REDISPORT}},password=${{Redis.REDISPASSWORD}},ssl=false
+Smtp__Host=smtp.yourprovider.com
+Smtp__Port=587
+Smtp__Username=<smtp-user>
+Smtp__Password=<smtp-pass>
+Smtp__From=noreply@trans-net.com
+Smtp__EnableSsl=true
+```
+
+> If you commit the [`railway.toml`](../railway.toml) config (already in this repo), you can drop the `RAILWAY_DOCKERFILE_PATH` line — the build path is defined there.
+
+### Variable reference
+
+| Variable | Required | Example / source | Notes |
+| --- | --- | --- | --- |
+| `ASPNETCORE_ENVIRONMENT` | ✅ | `Production` | Disables Swagger; enables configured‑origin CORS. |
+| `ASPNETCORE_URLS` | ✅ | `http://0.0.0.0:8080` | Must bind `0.0.0.0`, not localhost. |
+| `PORT` | ✅ | `8080` | Must match the port in `ASPNETCORE_URLS`. |
+| `RAILWAY_DOCKERFILE_PATH` | ✅¹ | `docker/Dockerfile.api` | ¹Not needed if `railway.toml` is committed. |
+| `ConnectionStrings__DefaultConnection` | ✅ | `${{MySQL.*}}` refs | Pomelo/MySQL format; uses private host. |
+| `Jwt__Secret` | ✅ | ≥ 32 random chars | Access‑token signing key. |
+| `Jwt__RefreshSecret` | ✅ | ≥ 32 random chars | Refresh‑token signing key. |
+| `Jwt__Issuer` | ✅ | `TransNet.API` | Must match token validation. |
+| `Jwt__Audience` | ✅ | `TransNet.Client` | Must match token validation. |
+| `Jwt__AccessTokenExpirationHours` | ⬜ | `1` | Defaults handled in config if omitted. |
+| `Cors__Origins__0`, `__1`, … | ✅² | front‑end URLs | ²Required for the browser front end to call the API. |
+| `ConnectionStrings__Redis` | ⬜ | `${{Redis.*}}` refs | Omit → in‑memory cache fallback. |
+| `Smtp__*` | ⬜ | your mail provider | Only needed for outbound email. |
 
 ---
 

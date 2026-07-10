@@ -7,6 +7,7 @@ import { MaintenancePage } from '@/components/common/MaintenancePage';
 import { PageLoader } from '@/components/ui/Spinner';
 import { pathnameToPageKey } from '@/constants/pageVisibility';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+import { usePublicSiteSettings } from '@/hooks/useSiteSettingsMap';
 
 const pageVariants = {
   initial: { opacity: 0, y: 12 },
@@ -17,7 +18,11 @@ const pageVariants = {
 export function PublicLayout() {
   const { pathname } = useLocation();
   const pageKey = pathnameToPageKey(pathname);
-  const { isLoading, isPublished, maintenanceMessage } = usePageVisibility(pageKey);
+  const { isLoading: visibilityLoading, isPublished, maintenanceMessage } = usePageVisibility(pageKey);
+  // Wait for site settings too, so section headings/visibility never flash their
+  // hardcoded defaults before the real CMS content arrives (noticeable in production).
+  const { isLoading: settingsLoading } = usePublicSiteSettings();
+  const isLoading = visibilityLoading || settingsLoading;
 
   if (pageKey && !isLoading && !isPublished) {
     return (

@@ -27,7 +27,7 @@ export function Spinner({ size = 'md', className }: SpinnerProps) {
 
 export function PageLoader() {
   return (
-    <div className="flex min-h-[40vh] items-center justify-center">
+    <div className="flex min-h-screen w-full flex-1 items-center justify-center px-4 py-16">
       <div className="flex flex-col items-center gap-4 rounded-xl border border-slate-200/80 bg-white px-10 py-8 shadow-sm">
         <Spinner size="lg" className="border-brand-gold-500" />
         <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Loading</p>

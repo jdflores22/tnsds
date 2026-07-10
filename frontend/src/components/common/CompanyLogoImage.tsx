@@ -79,9 +79,12 @@ export function LogoPreviewFrame({
   return (
     <div
       className={cn(
-        'flex items-center justify-center p-3',
+        'flex items-center justify-center rounded-xl p-3',
         variant === 'header' && 'bg-primary-900',
-        variant === 'checkerboard' && 'logo-checkerboard rounded-xl border border-slate-200',
+        // Transparent logos preview on a clean neutral surface (no distracting
+        // checkerboard, which users mistake for an added background). Only opaque
+        // formats (JPG) get a subtle fill so their edges are visible.
+        variant === 'checkerboard' && 'border border-slate-200 bg-white',
         !transparent && variant === 'checkerboard' && 'bg-slate-100',
         className,
       )}
@@ -89,7 +92,7 @@ export function LogoPreviewFrame({
       <img
         src={src}
         alt={alt}
-        className="max-h-24 w-auto max-w-full object-contain bg-transparent"
+        className="max-h-24 w-auto max-w-full bg-transparent object-contain"
       />
     </div>
   );
