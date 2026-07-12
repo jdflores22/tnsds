@@ -66,8 +66,18 @@ try
             }
             else
             {
-                var origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
-                    ?? new[] { "http://localhost:5173" };
+                var configured = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
+                    ?? Array.Empty<string>();
+                // Always include production front-end domains (Railway env vars can override
+                // appsettings.Production.json with a single origin and drop the rest).
+                var origins = configured
+                    .Concat(new[] { "https://tnsds.ph", "https://www.tnsds.ph" })
+                    .Where(o => !string.IsNullOrWhiteSpace(o))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                Log.Information("CORS allowed origins: {Origins}", string.Join(", ", origins));
+
                 policy.WithOrigins(origins)
                     .AllowAnyHeader()
                     .AllowAnyMethod()
@@ -97,9 +107,20 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Log.Information("Applying database migrations…");
         await db.Database.MigrateAsync();
-        var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
-        await seeder.SeedAsync();
+        Log.Information("Database migrations applied");
+
+        try
+        {
+            var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+            await seeder.SeedAsync();
+        }
+        catch (Exception ex)
+        {
+            // Don't block API startup when a partial/manual DB import leaves conflicting rows.
+            Log.Warning(ex, "Database seeding failed — API will start without re-seeding");
+        }
     }
 
     // Restore bundled seed images into the (possibly volume-backed, ephemeral) uploads
