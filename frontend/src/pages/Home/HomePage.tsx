@@ -7,6 +7,7 @@ import { Stats } from '@/pages/Home/sections/Stats';
 import { TrustedCompanies } from '@/pages/Home/sections/TrustedCompanies';
 import { TechnologiesSection } from '@/pages/Home/sections/TechnologiesSection';
 import { SoftwareSolutions } from '@/pages/Home/sections/SoftwareSolutions';
+import { FeaturedProduct } from '@/pages/Home/sections/FeaturedProduct';
 import { Industries } from '@/pages/Home/sections/Industries';
 import { WhyChooseUs } from '@/pages/Home/sections/WhyChooseUs';
 import { DevProcess } from '@/pages/Home/sections/DevProcess';
@@ -32,6 +33,7 @@ export default function HomePage() {
         {sections.home_clients && <TrustedCompanies />}
         {sections.home_services && <ServicesSection />}
         {sections.home_technologies && <TechnologiesSection />}
+        {sections.home_featured_product && <FeaturedProduct />}
         {sections.home_products && <SoftwareSolutions />}
         {sections.home_industries && <Industries />}
         {sections.home_why && <WhyChooseUs />}

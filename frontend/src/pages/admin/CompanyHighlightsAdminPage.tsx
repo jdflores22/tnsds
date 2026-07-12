@@ -19,7 +19,7 @@ export default function CompanyHighlightsAdminPage() {
   return (
     <AdminCrudPage<CompanyHighlight>
       title="Why choose us"
-      description="Manage highlight points shown in Why Choose Us sections."
+      description="Manage highlight points shown in Why Choose Us sections. Use homepage row to control which row each card appears in."
       createLabel="Add highlight"
       searchPlaceholder="Search highlights…"
       items={items}
@@ -28,17 +28,32 @@ export default function CompanyHighlightsAdminPage() {
         { key: 'title', label: 'Title' },
         { key: 'description', label: 'Description' },
         { key: 'sortOrder', label: 'Order' },
+        {
+          key: 'homepageRow',
+          label: 'Homepage row',
+          render: (item) => (item.homepageRow === 2 ? 'Row 2' : 'Row 1'),
+        },
       ]}
       onReorder={(ordered) => reorderMutation.mutateAsync(ordered)}
       isReordering={reorderMutation.isPending}
       onDelete={(id) => deleteMutation.mutateAsync(id)}
       formContent={(item, onClose) => (
         <EntityForm
-          defaultValues={item || { sortOrder: 0, isPublished: true }}
+          defaultValues={item || { sortOrder: 0, homepageRow: 1, isPublished: true }}
           fields={[
             { name: 'title', label: 'Title' },
             { name: 'description', label: 'Description', type: 'textarea' },
             { name: 'sortOrder', label: 'Sort order', type: 'number' },
+            {
+              name: 'homepageRow',
+              label: 'Homepage row',
+              type: 'select',
+              options: [
+                { value: 1, label: 'First row' },
+                { value: 2, label: 'Second row' },
+              ],
+              hint: 'Which row this highlight appears in on the homepage.',
+            },
             { name: 'isPublished', label: 'Published', type: 'checkbox' },
           ]}
           isSubmitting={createMutation.isPending || updateMutation.isPending}

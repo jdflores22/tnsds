@@ -9,9 +9,11 @@ import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 export interface FormField {
   name: string;
   label: string;
-  type?: 'text' | 'textarea' | 'number' | 'checkbox' | 'richtext' | 'image';
+  type?: 'text' | 'textarea' | 'number' | 'checkbox' | 'richtext' | 'image' | 'select';
   rows?: number;
   folder?: string;
+  options?: { value: string | number; label: string }[];
+  hint?: string;
 }
 
 export interface EntityFormProps {
@@ -33,6 +35,8 @@ function normalizeFormData(
       normalized[field.name] = data[field.name] === true;
     } else if (field.type === 'number') {
       normalized[field.name] = Number(data[field.name]) || 0;
+    } else if (field.type === 'select' && field.name === 'homepageRow') {
+      normalized[field.name] = Number(data[field.name]) === 2 ? 2 : 1;
     }
   }
 
@@ -125,6 +129,36 @@ export function EntityForm({
                   />
                   <span className="font-medium text-primary-900">{field.label}</span>
                 </label>
+              )}
+            />
+          );
+        }
+
+        if (field.type === 'select') {
+          return (
+            <Controller
+              key={field.name}
+              name={field.name}
+              control={control}
+              render={({ field: f }) => (
+                <div>
+                  <label htmlFor={field.name} className="mb-1.5 block text-sm font-medium text-slate-700">
+                    {field.label}
+                  </label>
+                  <select
+                    id={field.name}
+                    value={String(f.value ?? field.options?.[0]?.value ?? '')}
+                    onChange={(e) => f.onChange(field.name === 'homepageRow' ? Number(e.target.value) : e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-primary-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  >
+                    {(field.options ?? []).map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {field.hint && <p className="mt-1 text-xs text-slate-500">{field.hint}</p>}
+                </div>
               )}
             />
           );

@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import { ContentSettings } from '@/components/admin/ContentSettings';
 import { HomepageSectionsSettings } from '@/components/admin/HomepageSectionsSettings';
+import { ProductsContentSettings } from '@/components/admin/ProductsContentSettings';
+import { AboutContentSettings } from '@/components/admin/AboutContentSettings';
+import { ContactContentSettings } from '@/components/admin/ContactContentSettings';
 import { cn } from '@/utils/cn';
-type PageTab = 'about' | 'portfolio' | 'headings';
+type PageTab = 'about' | 'contact' | 'portfolio' | 'products' | 'headings';
 
 const TABS: { id: PageTab; label: string; hint: string }[] = [
-  { id: 'about', label: 'About', hint: 'Hero, story, mission & vision' },
+  { id: 'about', label: 'About', hint: 'Content, CTA & section themes' },
+  { id: 'products', label: 'Products', hint: 'Bottom CTA & page sections' },
+  { id: 'contact', label: 'Contact', hint: 'Form, steps & FAQ sections' },
   { id: 'portfolio', label: 'Portfolio', hint: 'Page intro & hero image' },
-  { id: 'headings', label: 'Page headings', hint: 'Titles on inner pages' },
+  { id: 'headings', label: 'Other pages', hint: 'Services, blog, careers…' },
 ];
 
 export function PagesContentSettings() {
@@ -41,9 +46,9 @@ export function PagesContentSettings() {
         ))}
       </div>
 
-      {tab === 'about' && (
-        <ContentSettings includeGroups={['about']} variant="compact" />
-      )}
+      {tab === 'about' && <AboutContentSettings />}
+      {tab === 'products' && <ProductsContentSettings />}
+      {tab === 'contact' && <ContactContentSettings />}
       {tab === 'portfolio' && (
         <ContentSettings includeGroups={['portfolio']} variant="compact" />
       )}

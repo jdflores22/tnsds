@@ -3,6 +3,8 @@ import { useSiteSettings, useUpdateSiteSetting, useCreateSiteSetting } from '@/a
 import {
   ABOUT_SECTION_TOGGLES,
   HOME_SECTION_TOGGLES,
+  PRODUCTS_SECTION_TOGGLES,
+  CONTACT_SECTION_TOGGLES,
   SECTION_DARK_BG_GROUPS,
   isSectionEnabledValue,
   sectionDarkBgKey,
@@ -28,7 +30,7 @@ function getDarkBg(
   return isSectionEnabledValue(value, defaultDark);
 }
 
-type LayoutSection = 'home' | 'about' | 'backgrounds' | 'all';
+type LayoutSection = 'home' | 'about' | 'products' | 'contact' | 'backgrounds' | 'all';
 
 interface SectionVisibilitySettingsProps {
   variant?: 'panel' | 'compact';
@@ -62,6 +64,15 @@ export function SectionVisibilitySettings({
   const toggleDarkBg = async (sectionId: string, enabled: boolean) => {
     setSavedId(null);
     await saveSetting(sectionDarkBgKey(sectionId), enabled ? 'true' : 'false', 'sections');
+    if (sectionId === 'home_featured_product' || sectionId === 'products_featured') {
+      await saveSetting(
+        sectionId === 'products_featured'
+          ? 'products_featured_theme_preset'
+          : 'home_featured_product_theme_preset',
+        enabled ? 'navy' : 'light',
+        sectionId === 'products_featured' ? 'products' : 'home',
+      );
+    }
     setSavedId(`${sectionId}-dark`);
   };
 
@@ -103,7 +114,11 @@ export function SectionVisibilitySettings({
   );
 
   const renderVisibilityList = (
-    items: typeof HOME_SECTION_TOGGLES | typeof ABOUT_SECTION_TOGGLES,
+    items:
+      | typeof HOME_SECTION_TOGGLES
+      | typeof ABOUT_SECTION_TOGGLES
+      | typeof PRODUCTS_SECTION_TOGGLES
+      | typeof CONTACT_SECTION_TOGGLES,
     group: string,
   ) => (
     <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
@@ -156,6 +171,10 @@ export function SectionVisibilitySettings({
     <>
       {(section === 'home' || section === 'all') && renderVisibilityList(HOME_SECTION_TOGGLES, 'home')}
       {(section === 'about' || section === 'all') && renderVisibilityList(ABOUT_SECTION_TOGGLES, 'about')}
+      {(section === 'products' || section === 'all') &&
+        renderVisibilityList(PRODUCTS_SECTION_TOGGLES, 'products')}
+      {(section === 'contact' || section === 'all') &&
+        renderVisibilityList(CONTACT_SECTION_TOGGLES, 'contact')}
       {(section === 'backgrounds' || section === 'all') && renderBackgrounds()}
       {savedId && (
         <p className="mt-3 text-xs font-medium text-emerald-600">Updated.</p>
@@ -190,6 +209,22 @@ export function SectionVisibilitySettings({
             <p className="mt-1 text-sm text-slate-500">Toggle sections on the about page.</p>
           </div>
           {renderVisibilityList(ABOUT_SECTION_TOGGLES, 'about')}
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-sm font-medium text-primary-900">Products page sections</h3>
+            <p className="mt-1 text-sm text-slate-500">Toggle sections on the products page.</p>
+          </div>
+          {renderVisibilityList(PRODUCTS_SECTION_TOGGLES, 'products')}
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-sm font-medium text-primary-900">Contact page sections</h3>
+            <p className="mt-1 text-sm text-slate-500">Toggle sections on the contact page.</p>
+          </div>
+          {renderVisibilityList(CONTACT_SECTION_TOGGLES, 'contact')}
         </div>
 
         <div className="space-y-3">

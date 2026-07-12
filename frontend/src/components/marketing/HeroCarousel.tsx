@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { HeroSlide } from '@/constants/heroCarousel';
 import type { HeroColorTokens } from '@/constants/heroAppearance';
@@ -24,6 +24,7 @@ export function HeroCarousel({
   onSlideChange,
 }: HeroCarouselProps) {
   const [active, setActive] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const total = slides.length;
   const current = slides[active] ?? slides[0];
 
@@ -32,12 +33,12 @@ export function HeroCarousel({
   }, [active, onSlideChange]);
 
   useEffect(() => {
-    if (!autoplay || total <= 1) return;
+    if (!autoplay || total <= 1 || isPaused) return;
     const id = window.setInterval(() => {
       setActive((i) => (i + 1) % total);
     }, intervalMs);
     return () => window.clearInterval(id);
-  }, [autoplay, intervalMs, total]);
+  }, [autoplay, intervalMs, total, isPaused]);
 
   const go = (dir: -1 | 1) => {
     setActive((i) => (i + dir + total) % total);
@@ -46,19 +47,34 @@ export function HeroCarousel({
   if (!current) return null;
 
   return (
-    <div className="relative">
-      <div className="min-h-[280px] sm:min-h-[320px]">
-        <AnimatePresence mode="wait">
+    <div
+      className="relative"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* All slides share one grid cell so height matches the tallest slide */}
+      <div className="grid">
+        {slides.map((slide, index) => (
           <motion.div
-            key={`${active}-${current.titleLine1}-${current.titleHighlight}`}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            key={`${index}-${slide.titleLine1}-${slide.titleHighlight}`}
+            className={cn(
+              'col-start-1 row-start-1 flex w-full self-stretch flex-col',
+              index === active ? 'z-10' : 'pointer-events-none z-0',
+            )}
+            initial={false}
+            animate={{ opacity: index === active ? 1 : 0, y: index === active ? 0 : 8 }}
             transition={{ duration: 0.4 }}
+            aria-hidden={index !== active}
           >
-            <HeroSlideContent slide={current} colors={colors} isDark={isDark} animate={false} />
+            <HeroSlideContent
+              slide={slide}
+              colors={colors}
+              isDark={isDark}
+              animate={false}
+              fillHeight
+            />
           </motion.div>
-        </AnimatePresence>
+        ))}
       </div>
 
       {total > 1 && (

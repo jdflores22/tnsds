@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Container } from '@/components/common/Container';
 import { useSectionDarkBackground } from '@/hooks/useSectionContent';
 import { sectionSurfaceClass } from '@/utils/sectionSurface';
@@ -31,7 +32,13 @@ export function AboutStatementSection({
   const isDark = darkBackground;
 
   const textBlock = (
-    <div className={cn(!hasImage && 'mx-auto max-w-3xl text-center')}>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4 }}
+      className={cn(!hasImage && 'mx-auto max-w-3xl text-center')}
+    >
       <div
         className={cn(
           'inline-flex h-12 w-12 items-center justify-center rounded-xl',
@@ -47,9 +54,24 @@ export function AboutStatementSection({
       >
         <Icon className="h-6 w-6" strokeWidth={1.5} />
       </div>
-      <p className={cn(isDark ? 'pro-eyebrow-dark mt-6' : 'pro-eyebrow mt-6', !hasImage && 'justify-center')}>
-        {eyebrow}
+      <p
+        className={cn(
+          'mt-6 text-xs font-semibold uppercase tracking-[0.2em]',
+          isDark ? 'text-brand-gold-400' : 'text-brand-gold-600',
+          !hasImage && 'text-center',
+        )}
+      >
+        {variant === 'mission' ? 'Mission' : 'Vision'}
       </p>
+      <h2
+        className={cn(
+          'mt-2 text-2xl font-semibold tracking-tight sm:text-3xl',
+          isDark ? 'text-white' : 'text-primary-900',
+          !hasImage && 'text-center',
+        )}
+      >
+        {eyebrow}
+      </h2>
       <p
         className={cn(
           'mt-4 text-base leading-relaxed sm:text-lg sm:leading-relaxed',
@@ -58,11 +80,17 @@ export function AboutStatementSection({
       >
         {body}
       </p>
-    </div>
+    </motion.div>
   );
 
   const imageBlock = hasImage ? (
-    <div className="relative">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.45, delay: 0.08 }}
+      className="relative"
+    >
       <div
         className={cn(
           'overflow-hidden rounded-2xl border shadow-sm',
@@ -80,7 +108,16 @@ export function AboutStatementSection({
           aria-hidden
         />
       )}
-    </div>
+      {isDark && (
+        <div
+          className={cn(
+            'pointer-events-none absolute -bottom-4 -z-10 h-full w-full rounded-2xl bg-brand-gold-500/10 blur-sm',
+            variant === 'mission' ? '-right-4' : '-left-4',
+          )}
+          aria-hidden
+        />
+      )}
+    </motion.div>
   ) : null;
 
   return (

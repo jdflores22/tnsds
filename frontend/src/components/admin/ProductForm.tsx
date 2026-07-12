@@ -21,6 +21,8 @@ interface FormValues {
   featuresText: string;
   sortOrder: number;
   isPublished: boolean;
+  isFeatured: boolean;
+  homepageRow: number;
   logo: string[];
   screenshots: string[];
 }
@@ -45,6 +47,8 @@ function toFormValues(item?: SoftwareProduct | null): FormValues {
     featuresText: features.join('\n'),
     sortOrder: item?.sortOrder ?? 0,
     isPublished: item?.isPublished ?? true,
+    isFeatured: item?.isFeatured ?? false,
+    homepageRow: item?.homepageRow ?? 1,
     logo: item?.logoUrl ? [item.logoUrl] : [],
     screenshots: parseJsonArray(item?.screenshotsJson),
   };
@@ -72,6 +76,8 @@ export function ProductForm({ item, isSubmitting, onCancel, onSubmit }: ProductF
           screenshotsJson: JSON.stringify(data.screenshots),
           sortOrder: Number(data.sortOrder) || 0,
           isPublished: data.isPublished === true,
+          isFeatured: data.isFeatured === true,
+          homepageRow: Number(data.homepageRow) === 2 ? 2 : 1,
           logoUrl: data.logo[0] ?? '',
         }),
       )}
@@ -139,7 +145,30 @@ export function ProductForm({ item, isSubmitting, onCancel, onSubmit }: ProductF
         )}
       />
 
-      <Input label="Sort order" type="number" {...register('sortOrder', { valueAsNumber: true })} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input label="Sort order" type="number" {...register('sortOrder', { valueAsNumber: true })} />
+        <Controller
+          name="homepageRow"
+          control={control}
+          render={({ field }) => (
+            <div>
+              <label htmlFor="homepageRow" className="mb-1.5 block text-sm font-medium text-slate-700">
+                Homepage row
+              </label>
+              <select
+                id="homepageRow"
+                value={field.value}
+                onChange={(e) => field.onChange(Number(e.target.value))}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-primary-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+              >
+                <option value={1}>First row</option>
+                <option value={2}>Second row</option>
+              </select>
+              <p className="mt-1 text-xs text-slate-500">Which row this product appears in on the homepage grid.</p>
+            </div>
+          )}
+        />
+      </div>
 
       <Controller
         name="isPublished"
@@ -153,6 +182,27 @@ export function ProductForm({ item, isSubmitting, onCancel, onSubmit }: ProductF
               className="h-4 w-4 rounded border-slate-300 text-primary-700"
             />
             <span className="font-medium text-primary-900">Published on website</span>
+          </label>
+        )}
+      />
+
+      <Controller
+        name="isFeatured"
+        control={control}
+        render={({ field }) => (
+          <label className="flex items-center gap-3 rounded-lg border border-brand-gold-200 bg-brand-gold-50/50 px-4 py-3 text-sm">
+            <input
+              type="checkbox"
+              checked={Boolean(field.value)}
+              onChange={(e) => field.onChange(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-brand-gold-600"
+            />
+            <span>
+              <span className="font-medium text-primary-900">Highlight on homepage</span>
+              <span className="mt-0.5 block text-xs text-slate-500">
+                Shows this product in the featured spotlight section. Only one product can be featured at a time.
+              </span>
+            </span>
           </label>
         )}
       />

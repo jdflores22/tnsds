@@ -71,6 +71,7 @@ import { toast } from '@/store/toastStore';
 
 function invalidateSettings(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ['settings'] });
+  queryClient.invalidateQueries({ queryKey: ['settings', 'public'] });
 }
 
 export const servicesHooks = createResourceHooks<Service, CreateService, UpdateService>(

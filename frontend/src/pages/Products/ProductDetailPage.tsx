@@ -6,16 +6,7 @@ import { PageSEO } from '@/components/common/PageSEO';
 import { Button } from '@/components/ui/Button';
 import { PageLoader } from '@/components/ui/Spinner';
 import { resolveMediaUrl } from '@/utils/media';
-
-function parseJsonArray(value?: string): string[] {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    return Array.isArray(parsed) ? parsed.map(String) : [];
-  } catch {
-    return value.split(',').map((s) => s.trim()).filter(Boolean);
-  }
-}
+import { parseJsonArray } from '@/utils/jsonArray';
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();

@@ -36,6 +36,9 @@ public class ProductService : IProductService
 
     public async Task<ProductDto> CreateAsync(CreateProductDto dto, CancellationToken cancellationToken = default)
     {
+        if (dto.IsFeatured)
+            await ClearFeaturedExceptAsync(null, cancellationToken);
+
         var entity = new SoftwareProduct
         {
             Name = dto.Name,
@@ -46,7 +49,9 @@ public class ProductService : IProductService
             ScreenshotsJson = string.IsNullOrWhiteSpace(dto.ScreenshotsJson) ? "[]" : dto.ScreenshotsJson,
             LogoUrl = dto.LogoUrl,
             SortOrder = dto.SortOrder,
-            IsPublished = dto.IsPublished
+            IsPublished = dto.IsPublished,
+            IsFeatured = dto.IsFeatured,
+            HomepageRow = NormalizeHomepageRow(dto.HomepageRow),
         };
         _context.Add(entity);
         await _context.SaveChangesAsync(cancellationToken);
@@ -58,6 +63,9 @@ public class ProductService : IProductService
         var entity = await _context.SoftwareProducts.FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, cancellationToken);
         if (entity is null) return null;
 
+        if (dto.IsFeatured)
+            await ClearFeaturedExceptAsync(id, cancellationToken);
+
         entity.Name = dto.Name;
         entity.Slug = dto.Slug ?? SlugHelper.Generate(dto.Name);
         entity.ShortDescription = dto.ShortDescription;
@@ -67,6 +75,8 @@ public class ProductService : IProductService
         entity.LogoUrl = dto.LogoUrl;
         entity.SortOrder = dto.SortOrder;
         entity.IsPublished = dto.IsPublished;
+        entity.IsFeatured = dto.IsFeatured;
+        entity.HomepageRow = NormalizeHomepageRow(dto.HomepageRow);
         entity.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
         return Map(entity);
@@ -83,6 +93,21 @@ public class ProductService : IProductService
         return true;
     }
 
+    private async Task ClearFeaturedExceptAsync(Guid? keepId, CancellationToken cancellationToken)
+    {
+        var others = await _context.SoftwareProducts
+            .Where(p => !p.IsDeleted && p.IsFeatured && (keepId == null || p.Id != keepId))
+            .ToListAsync(cancellationToken);
+
+        foreach (var product in others)
+        {
+            product.IsFeatured = false;
+            product.UpdatedAt = DateTime.UtcNow;
+        }
+    }
+
+    private static int NormalizeHomepageRow(int row) => row <= 1 ? 1 : 2;
+
     private static ProductDto Map(SoftwareProduct entity) => new()
     {
         Id = entity.Id,
@@ -95,6 +120,8 @@ public class ProductService : IProductService
         LogoUrl = entity.LogoUrl,
         SortOrder = entity.SortOrder,
         IsPublished = entity.IsPublished,
+        IsFeatured = entity.IsFeatured,
+        HomepageRow = entity.HomepageRow,
         CreatedAt = entity.CreatedAt,
         UpdatedAt = entity.UpdatedAt
     };

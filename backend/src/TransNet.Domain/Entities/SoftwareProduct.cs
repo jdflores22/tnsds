@@ -15,4 +15,8 @@ public class SoftwareProduct : BaseEntity
     public string ScreenshotsJson { get; set; } = "[]";
     public string LogoUrl { get; set; } = string.Empty;
     public int SortOrder { get; set; }
+    /// <summary>When true, shown in the homepage featured product spotlight (only one at a time).</summary>
+    public bool IsFeatured { get; set; }
+    /// <summary>Homepage grid row (1 = first row, 2 = second row).</summary>
+    public int HomepageRow { get; set; } = 1;
 }

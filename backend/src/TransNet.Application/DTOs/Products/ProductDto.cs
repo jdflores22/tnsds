@@ -12,6 +12,8 @@ public class ProductDto
     public string LogoUrl { get; set; } = string.Empty;
     public int SortOrder { get; set; }
     public bool IsPublished { get; set; }
+    public bool IsFeatured { get; set; }
+    public int HomepageRow { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
@@ -27,6 +29,8 @@ public class CreateProductDto
     public string LogoUrl { get; set; } = string.Empty;
     public int SortOrder { get; set; }
     public bool IsPublished { get; set; }
+    public bool IsFeatured { get; set; }
+    public int HomepageRow { get; set; } = 1;
 }
 
 public class UpdateProductDto
@@ -40,4 +44,6 @@ public class UpdateProductDto
     public string LogoUrl { get; set; } = string.Empty;
     public int SortOrder { get; set; }
     public bool IsPublished { get; set; }
+    public bool IsFeatured { get; set; }
+    public int HomepageRow { get; set; } = 1;
 }

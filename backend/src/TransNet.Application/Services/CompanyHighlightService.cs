@@ -34,7 +34,8 @@ public class CompanyHighlightService : ICompanyHighlightService
             Title = dto.Title,
             Description = dto.Description,
             SortOrder = dto.SortOrder,
-            IsPublished = dto.IsPublished
+            IsPublished = dto.IsPublished,
+            HomepageRow = NormalizeHomepageRow(dto.HomepageRow),
         };
         _context.Add(entity);
         await _context.SaveChangesAsync(cancellationToken);
@@ -50,6 +51,7 @@ public class CompanyHighlightService : ICompanyHighlightService
         entity.Description = dto.Description;
         entity.SortOrder = dto.SortOrder;
         entity.IsPublished = dto.IsPublished;
+        entity.HomepageRow = NormalizeHomepageRow(dto.HomepageRow);
         entity.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
         return Map(entity);
@@ -66,6 +68,8 @@ public class CompanyHighlightService : ICompanyHighlightService
         return true;
     }
 
+    private static int NormalizeHomepageRow(int row) => row <= 1 ? 1 : 2;
+
     private static CompanyHighlightDto Map(CompanyHighlight entity) => new()
     {
         Id = entity.Id,
@@ -73,6 +77,7 @@ public class CompanyHighlightService : ICompanyHighlightService
         Description = entity.Description,
         SortOrder = entity.SortOrder,
         IsPublished = entity.IsPublished,
+        HomepageRow = entity.HomepageRow,
         CreatedAt = entity.CreatedAt,
         UpdatedAt = entity.UpdatedAt
     };

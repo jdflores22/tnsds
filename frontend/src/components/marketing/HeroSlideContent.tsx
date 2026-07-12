@@ -11,11 +11,22 @@ type HeroSlideContentProps = {
   colors: HeroColorTokens;
   isDark: boolean;
   animate?: boolean;
+  /** Pin CTAs to the bottom inside a fixed-height carousel slide */
+  fillHeight?: boolean;
 };
 
-export function HeroSlideContent({ slide, colors, isDark, animate = true }: HeroSlideContentProps) {
+export function HeroSlideContent({
+  slide,
+  colors,
+  isDark,
+  animate = true,
+  fillHeight = false,
+}: HeroSlideContentProps) {
+  const wrapperClass = fillHeight ? 'flex h-full min-h-full flex-1 flex-col' : undefined;
+  const ctaClass = fillHeight ? 'mt-auto flex flex-wrap gap-3 pt-6' : 'mt-10 flex flex-wrap gap-3';
+
   const body = (
-    <>
+    <div className={wrapperClass}>
       {slide.eyebrow && (
         <p
           className="mb-5 text-xs font-semibold uppercase tracking-[0.16em]"
@@ -24,7 +35,7 @@ export function HeroSlideContent({ slide, colors, isDark, animate = true }: Hero
           {slide.eyebrow}
         </p>
       )}
-      <h1 className="max-w-5xl text-[2.75rem] font-semibold leading-[1.05] tracking-tight sm:text-6xl lg:text-[4.25rem]">
+      <h1 className="max-w-5xl text-[2.25rem] font-semibold leading-[1.08] tracking-tight sm:text-4xl lg:text-5xl">
         <span style={{ color: colors.title }}>{slide.titleLine1}</span>
         {slide.titleHighlight ? (
           <>
@@ -36,14 +47,14 @@ export function HeroSlideContent({ slide, colors, isDark, animate = true }: Hero
 
       {slide.description && (
         <p
-          className="mt-8 max-w-2xl text-lg leading-relaxed sm:text-xl sm:leading-relaxed"
+          className="mt-6 max-w-2xl text-base leading-relaxed sm:mt-8 sm:text-lg sm:leading-relaxed lg:text-xl"
           style={{ color: colors.body }}
         >
           {slide.description}
         </p>
       )}
 
-      <div className="mt-10 flex flex-wrap gap-3">
+      <div className={ctaClass}>
         {slide.ctaLabel && slide.ctaHref && (
           <Link to={slide.ctaHref}>
             <Button size="lg" variant={isDark ? 'secondary' : 'primary'}>
@@ -67,11 +78,11 @@ export function HeroSlideContent({ slide, colors, isDark, animate = true }: Hero
           </Link>
         )}
       </div>
-    </>
+    </div>
   );
 
   if (!animate) {
-    return <div>{body}</div>;
+    return body;
   }
 
   return (

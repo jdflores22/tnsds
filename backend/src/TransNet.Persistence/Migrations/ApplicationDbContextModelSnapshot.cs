@@ -425,7 +425,13 @@ namespace TransNet.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<int>("HomepageRow")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsFeatured")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsPublished")
@@ -544,6 +550,7 @@ namespace TransNet.Persistence.Migrations
                     b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("char(36)");
                     b.Property<DateTime>("CreatedAt").HasColumnType("datetime(6)");
                     b.Property<string>("Description").IsRequired().HasColumnType("longtext");
+                    b.Property<int>("HomepageRow").HasColumnType("int");
                     b.Property<bool>("IsDeleted").HasColumnType("tinyint(1)");
                     b.Property<bool>("IsPublished").HasColumnType("tinyint(1)");
                     b.Property<int>("SortOrder").HasColumnType("int");

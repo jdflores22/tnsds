@@ -17,6 +17,7 @@ export const HOME_SECTION_TOGGLES = [
   { id: 'home_stats', label: 'Stats counter', manageHint: 'Admin → Stats' },
   { id: 'home_clients', label: 'Trusted companies', manageHint: 'Admin → Clients' },
   { id: 'home_technologies', label: 'Technologies', manageHint: 'Admin → Technologies' },
+  { id: 'home_featured_product', label: 'Featured product', manageHint: 'Admin → Products (mark one as featured)' },
   { id: 'home_products', label: 'Software products', manageHint: 'Admin → Products' },
   { id: 'home_industries', label: 'Sector expertise', manageHint: 'Admin → Industries' },
   { id: 'home_why', label: 'Why choose us', manageHint: 'Admin → Why choose us' },
@@ -29,16 +30,56 @@ export const HOME_SECTION_TOGGLES = [
 ] as const;
 
 export const ABOUT_SECTION_TOGGLES = [
-  { id: 'about_stats_bar', label: 'Quick stats bar', manageHint: 'Admin → Stats' },
+  { id: 'about_mission', label: 'Mission statement', manageHint: 'Settings → Page content → About' },
+  { id: 'about_vision', label: 'Vision statement', manageHint: 'Settings → Page content → About' },
+  { id: 'about_story', label: 'Company story', manageHint: 'Settings → Page content → About' },
+  { id: 'about_stats_bar', label: 'Quick stats bar (hero)', manageHint: 'Admin → Stats' },
   { id: 'about_stats', label: 'Stats showcase', manageHint: 'Admin → Stats' },
   { id: 'about_why', label: 'Why choose us', manageHint: 'Admin → Why choose us' },
   { id: 'about_process', label: 'Development process', manageHint: 'Admin → Process steps' },
   { id: 'about_industries', label: 'Sector expertise', manageHint: 'Admin → Industries' },
-  { id: 'about_cta', label: 'Contact CTA', manageHint: 'Settings → Site content' },
+  {
+    id: 'about_products_promo',
+    label: 'Software products promo',
+    manageHint: 'Settings → Page content → About',
+  },
+  { id: 'about_cta', label: 'Contact CTA', manageHint: 'Settings → Page content → About' },
+] as const;
+
+export const PRODUCTS_SECTION_TOGGLES = [
+  {
+    id: 'products_featured',
+    label: 'Featured product spotlight',
+    manageHint: 'Admin → Products (mark one as featured)',
+  },
+  { id: 'products_catalog', label: 'Product catalog', manageHint: 'Admin → Products' },
+  {
+    id: 'products_cta',
+    label: 'Bottom call-to-action',
+    manageHint: 'Settings → Page content → Products',
+  },
 ] as const;
 
 export type HomeSectionToggleId = (typeof HOME_SECTION_TOGGLES)[number]['id'];
 export type AboutSectionToggleId = (typeof ABOUT_SECTION_TOGGLES)[number]['id'];
+export type ProductsSectionToggleId = (typeof PRODUCTS_SECTION_TOGGLES)[number]['id'];
+export const CONTACT_SECTION_TOGGLES = [
+  { id: 'contact_main', label: 'Contact form & details', manageHint: 'Settings → Page content → Contact' },
+  { id: 'contact_map', label: 'Map & location', manageHint: 'Settings → Page content → Contact' },
+  {
+    id: 'contact_expect',
+    label: 'What happens next',
+    manageHint: 'Settings → Page content → Contact',
+  },
+  {
+    id: 'contact_careers',
+    label: 'Careers call-to-action',
+    manageHint: 'Settings → Page content → Contact',
+  },
+  { id: 'contact_faq', label: 'FAQ', manageHint: 'Admin → FAQ' },
+] as const;
+
+export type ContactSectionToggleId = (typeof CONTACT_SECTION_TOGGLES)[number]['id'];
 
 export function isSectionEnabledValue(value: string | undefined, defaultEnabled = true): boolean {
   if (value === undefined || value === '') return defaultEnabled;
@@ -64,6 +105,7 @@ export const SECTION_DARK_BG_GROUPS: SectionDarkBgGroup[] = [
       { id: 'home_portfolio', label: 'Featured portfolio', defaultDark: false },
       { id: 'home_clients', label: 'Trusted companies', defaultDark: false },
       { id: 'home_technologies', label: 'Technologies', defaultDark: false },
+      { id: 'home_featured_product', label: 'Featured product', defaultDark: true },
       { id: 'home_products', label: 'Software products', defaultDark: false },
       { id: 'home_industries', label: 'Sector expertise', defaultDark: false },
       { id: 'home_why', label: 'Why choose us', defaultDark: false },
@@ -77,6 +119,7 @@ export const SECTION_DARK_BG_GROUPS: SectionDarkBgGroup[] = [
   {
     page: 'About page',
     toggles: [
+      { id: 'about_hero', label: 'Page hero', defaultDark: false },
       { id: 'about_mission', label: 'Mission', defaultDark: false },
       { id: 'about_vision', label: 'Vision', defaultDark: false },
       { id: 'about_story', label: 'Our story', defaultDark: false },
@@ -84,6 +127,7 @@ export const SECTION_DARK_BG_GROUPS: SectionDarkBgGroup[] = [
       { id: 'about_why', label: 'What we do', defaultDark: false },
       { id: 'about_process', label: 'Development process', defaultDark: true },
       { id: 'about_industries', label: 'Sector expertise', defaultDark: false },
+      { id: 'about_products_promo', label: 'Software products promo', defaultDark: true },
       { id: 'about_cta', label: 'Contact CTA', defaultDark: false },
     ],
   },
@@ -114,8 +158,24 @@ export const SECTION_DARK_BG_GROUPS: SectionDarkBgGroup[] = [
     toggles: [{ id: 'industries_list', label: 'Industries grid', defaultDark: false }],
   },
   {
+    page: 'Products page',
+    toggles: [
+      { id: 'products_hero', label: 'Page hero', defaultDark: true },
+      { id: 'products_featured', label: 'Featured product spotlight', defaultDark: true },
+      { id: 'products_catalog', label: 'Product catalog', defaultDark: false },
+      { id: 'products_cta', label: 'Bottom call-to-action', defaultDark: false },
+    ],
+  },
+  {
     page: 'Contact page',
-    toggles: [{ id: 'contact_main', label: 'Contact form & details', defaultDark: false }],
+    toggles: [
+      { id: 'contact_hero', label: 'Page hero', defaultDark: true },
+      { id: 'contact_main', label: 'Contact form & details', defaultDark: false },
+      { id: 'contact_map', label: 'Map & location', defaultDark: false },
+      { id: 'contact_expect', label: 'What happens next', defaultDark: true },
+      { id: 'contact_careers', label: 'Careers call-to-action', defaultDark: true },
+      { id: 'contact_faq', label: 'FAQ', defaultDark: false },
+    ],
   },
 ];
 

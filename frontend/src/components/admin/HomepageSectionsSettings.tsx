@@ -35,6 +35,15 @@ const HOME_SECTIONS = [
     },
   },
   {
+    id: 'home_featured_product',
+    label: 'Featured product',
+    defaults: {
+      eyebrow: 'Featured product',
+      title: 'Software built for real operations',
+      subtitle: 'Explore our flagship solution — designed for teams that need reliability, visibility, and scale.',
+    },
+  },
+  {
     id: 'home_products',
     label: 'Software products',
     defaults: {
@@ -116,12 +125,20 @@ const HOME_SECTIONS = [
 const PAGE_HEROES = [
   { id: 'services_page', label: 'Services — page hero', defaults: { title: 'Our Services', subtitle: 'Comprehensive software solutions — from custom applications and web platforms to mobile apps and ongoing support.' } },
   { id: 'services_section', label: 'Services — main section', defaults: { eyebrow: 'What we do', title: 'End-to-End Software Solutions', subtitle: 'We partner with businesses to design, build, deploy, and maintain software that drives real outcomes.' } },
-  { id: 'contact_page', label: 'Contact page', defaults: { title: 'Contact Us', subtitle: "We'd love to hear about your project." } },
   { id: 'careers_page', label: 'Careers page', defaults: { title: 'Careers', subtitle: 'Build the future of enterprise software with us.' } },
   { id: 'blog_page', label: 'Blog page', defaults: { title: 'Blog', subtitle: 'Insights, trends, and best practices.' } },
   { id: 'industries_page', label: 'Industries page', defaults: { title: 'Industries We Serve', subtitle: 'Domain expertise across diverse sectors.' } },
   { id: 'about_industries', label: 'About — industries section', defaults: { eyebrow: 'Industries', title: 'Sector Expertise', subtitle: 'Deep domain knowledge across diverse industries — from healthcare to logistics.' } },
+  { id: 'about_why', label: 'About — what we do', defaults: { eyebrow: 'What we do', title: 'We help companies build better software', subtitle: 'Custom development, dedicated teams, and long-term support tailored to your goals.' } },
+  { id: 'about_process', label: 'About — development process', defaults: { eyebrow: 'Process', title: 'Our Development Process', subtitle: 'A proven methodology for delivering successful projects on time and on budget.' } },
+  { id: 'about_stats', label: 'About — statistics', defaults: { title: 'The support you need, for results you want' } },
+  { id: 'products_page', label: 'Products — page hero', defaults: { eyebrow: 'Software products', title: 'Enterprise Software Products', subtitle: 'Ready-to-deploy and customizable solutions built for real-world operations — from document management to industry-specific platforms.' } },
+  { id: 'products_featured', label: 'Products — featured spotlight', defaults: { eyebrow: 'Featured product', title: 'Our flagship solution', subtitle: 'Purpose-built software for teams that need reliability, visibility, and scale in daily operations.' } },
+  { id: 'products_catalog', label: 'Products — catalog section', defaults: { eyebrow: 'Product catalog', title: 'All software solutions', subtitle: 'Browse our full suite of enterprise products — each customizable to your workflows and integration needs.' } },
 ] as const;
+
+/** Inner-page headings excluding products (edited under Settings → Pages → Products). */
+const PAGE_HEADINGS = PAGE_HEROES.filter((page) => !page.id.startsWith('products_'));
 
 const CTA_FIELDS = [
   { key: 'home_cta_title', label: 'Title', default: 'Ready to build your next software solution?' },
@@ -188,6 +205,29 @@ export function HomepageSectionsSettings({
       setSavingId(null);
     }
   };
+
+  const renderCtaFields = (
+    fields: readonly { key: string; label: string; default: string; type?: 'textarea' }[],
+  ) =>
+    fields.map((field) =>
+      field.type === 'textarea' ? (
+        <div key={field.key} className="sm:col-span-2">
+          <Textarea
+            name={field.key}
+            label={field.label}
+            rows={2}
+            defaultValue={getValue(settings, field.key) || field.default}
+          />
+        </div>
+      ) : (
+        <Input
+          key={field.key}
+          name={field.key}
+          label={field.label}
+          defaultValue={getValue(settings, field.key) || field.default}
+        />
+      ),
+    );
 
   if (isLoading) {
     return (
@@ -284,25 +324,7 @@ export function HomepageSectionsSettings({
                 }}
                 className="grid gap-4 sm:grid-cols-2"
               >
-                {CTA_FIELDS.map((field) =>
-                  field.type === 'textarea' ? (
-                    <div key={field.key} className="sm:col-span-2">
-                      <Textarea
-                        name={field.key}
-                        label={field.label}
-                        rows={2}
-                        defaultValue={getValue(settings, field.key) || field.default}
-                      />
-                    </div>
-                  ) : (
-                    <Input
-                      key={field.key}
-                      name={field.key}
-                      label={field.label}
-                      defaultValue={getValue(settings, field.key) || field.default}
-                    />
-                  ),
-                )}
+                {renderCtaFields(CTA_FIELDS)}
               </form>
               <SaveFeedback saved={savedId === 'cta'} isSaving={isSaving} />
             </div>
@@ -443,8 +465,9 @@ export function HomepageSectionsSettings({
   return (
     <>
       {variant === 'compact' ? (
-        <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
-          {PAGE_HEROES.map((page) => {
+        <div className="space-y-4">
+          <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+            {PAGE_HEADINGS.map((page) => {
             const isOpen = openId === page.id;
             const currentTitle =
               getValue(settings, `${page.id}_title`) || page.defaults.title;
@@ -520,14 +543,16 @@ export function HomepageSectionsSettings({
               </div>
             );
           })}
+          </div>
         </div>
       ) : (
         <div className="space-y-6">
           <p className="text-sm text-slate-500">
-            Hero titles and section headings for inner pages. Publish or hide whole pages in the{' '}
-            <strong className="font-medium text-primary-800">Pages</strong> tab.
+            Hero titles and section headings for inner pages. Products page content is under the{' '}
+            <strong className="font-medium text-primary-800">Products</strong> tab. Publish or hide
+            whole pages in the <strong className="font-medium text-primary-800">Pages</strong> tab.
           </p>
-          {PAGE_HEROES.map((page) => renderSectionForm(page, 'pages'))}
+          {PAGE_HEADINGS.map((page) => renderSectionForm(page, 'pages'))}
         </div>
       )}
     </>

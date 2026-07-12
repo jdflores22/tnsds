@@ -21,7 +21,7 @@ export default function ProductsAdminPage() {
   return (
     <AdminCrudPage<SoftwareProduct>
       title="Software products"
-      description="Manage your software solutions (ECMS, CRM, ERP, etc.) shown in the homepage Products section. Use Portfolio for client project case studies."
+      description="Manage software products shown on the homepage. Mark one product as featured for the homepage spotlight section."
       createLabel="Add product"
       searchPlaceholder="Search products…"
       items={items}
@@ -46,6 +46,17 @@ export default function ProductsAdminPage() {
         { key: 'name', label: 'Name' },
         { key: 'shortDescription', label: 'Description' },
         { key: 'sortOrder', label: 'Order' },
+        {
+          key: 'homepageRow',
+          label: 'Homepage row',
+          render: (item) => (item.homepageRow === 2 ? 'Row 2' : 'Row 1'),
+        },
+        {
+          key: 'isFeatured',
+          label: 'Featured',
+          render: (item) =>
+            item.isFeatured ? <Badge variant="accent">Homepage</Badge> : <span className="text-slate-400">—</span>,
+        },
         {
           key: 'isPublished',
           label: 'Status',

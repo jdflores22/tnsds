@@ -41,7 +41,14 @@ export function PreFooterCTA() {
               </Button>
             </Link>
             <Link to="/portfolio">
-              <Button variant="outline" size="lg">
+              <Button
+                variant="outline"
+                size="lg"
+                className={cn(
+                  theme === 'dark' &&
+                    'border-white/25 bg-transparent text-white hover:border-white/40 hover:bg-white/10 hover:text-white',
+                )}
+              >
                 View case studies
               </Button>
             </Link>

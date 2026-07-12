@@ -77,6 +77,8 @@ export interface SoftwareProduct extends BaseEntity {
   screenshotsJson: string;
   logoUrl: string;
   sortOrder: number;
+  isFeatured: boolean;
+  homepageRow: number;
 }
 
 export interface Industry extends BaseEntity {
@@ -104,6 +106,7 @@ export interface CompanyHighlight extends BaseEntity {
   title: string;
   description: string;
   sortOrder: number;
+  homepageRow: number;
 }
 
 export interface ProcessStep extends BaseEntity {

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { cn } from '@/utils/cn';
 import { useSectionDarkBackground } from '@/hooks/useSectionContent';
 
@@ -85,6 +85,7 @@ interface PageSectionProps {
   /** When set, navy background is controlled from Settings → Section visibility. */
   sectionId?: string;
   defaultDark?: boolean;
+  style?: CSSProperties;
 }
 
 const sectionVariants = {
@@ -101,6 +102,7 @@ export function PageSection({
   variant = 'white',
   sectionId,
   defaultDark,
+  style,
 }: PageSectionProps) {
   const darkFromSettings = sectionId ? useSectionDarkBackground(sectionId, defaultDark) : false;
   const isDark = darkFromSettings || variant === 'dark';
@@ -109,10 +111,11 @@ export function PageSection({
   return (
     <section
       id={id}
+      style={style}
       className={cn(
         'section-padding border-b',
         isDark ? 'border-white/10 circuit-bg' : 'border-slate-200',
-        sectionVariants[resolvedVariant],
+        !style?.backgroundColor && sectionVariants[resolvedVariant],
         className,
       )}
     >

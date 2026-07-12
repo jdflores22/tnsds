@@ -8,6 +8,10 @@ import { Spinner } from '@/components/ui/Spinner';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { SaveFeedback, SettingsPanel } from '@/components/admin/SettingsPanel';
 import { SettingsImageField } from '@/components/admin/SettingsImageField';
+import {
+  persistAboutThemesFromForm,
+  SectionThemeField,
+} from '@/components/admin/SectionThemeField';
 import type { SiteSetting } from '@/types';
 
 type FieldDef = {
@@ -86,8 +90,13 @@ const CONTENT_GROUPS: {
     imageFields: [
       {
         key: 'about_hero_image',
-        label: 'Hero & story image',
-        hint: 'Shown in the page hero and company story section. Recommended 1200×900 or wider.',
+        label: 'Hero background image',
+        hint: 'Shown behind the page headline. Recommended 1600×900 or wider.',
+      },
+      {
+        key: 'about_story_image',
+        label: 'Company story image',
+        hint: 'Optional photo beside the story section. Falls back to the hero image if empty.',
       },
       {
         key: 'about_mission_image',
@@ -101,6 +110,7 @@ const CONTENT_GROUPS: {
       },
     ],
     fields: [
+      { key: 'about_page_eyebrow', label: 'Page hero — eyebrow' },
       { key: 'about_page_title', label: 'Page headline' },
       { key: 'about_page_subtitle', label: 'Page intro', type: 'textarea', rows: 3 },
       { key: 'about_mission', label: 'Mission statement', type: 'textarea', rows: 3 },
@@ -127,7 +137,13 @@ const CONTENT_GROUPS: {
       { key: 'about_story_title', label: 'Story section — title' },
       { key: 'about_intro', label: 'Story — first paragraph', type: 'textarea', rows: 4 },
       { key: 'about_secondary', label: 'Story — second paragraph', type: 'textarea', rows: 4 },
-      { key: 'about_stats_title', label: 'Stats section — title' },
+      { key: 'about_cta_title', label: 'Contact CTA — title' },
+      {
+        key: 'about_cta_subtitle',
+        label: 'Contact CTA — subtitle',
+        type: 'textarea',
+        rows: 2,
+      },
     ],
   },
   {
@@ -234,6 +250,19 @@ export function ContentSettings({
           saves.push(saveFieldByKey(field.key, richDrafts[field.key], group));
         }
       }
+      if (groupId === 'about') {
+        saves.push(persistAboutThemesFromForm(saveFieldByKey, formData));
+        const promoKeys = [
+          'about_products_promo_eyebrow',
+          'about_products_promo_title',
+          'about_products_promo_subtitle',
+        ] as const;
+        for (const key of promoKeys) {
+          if (formData.has(key)) {
+            saves.push(saveFieldByKey(key, String(formData.get(key) ?? ''), group));
+          }
+        }
+      }
       await Promise.all(saves);
       setSavedGroup(groupId);
     } finally {
@@ -321,9 +350,12 @@ export function ContentSettings({
             <legend className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               Page hero
             </legend>
+            <SectionThemeField sectionId="about_hero" settings={settings} />
             <div className="grid gap-4 sm:grid-cols-2">
               {group.fields
-                .filter((f) => ['about_page_title', 'about_page_subtitle'].includes(f.key))
+                .filter((f) =>
+                  ['about_page_eyebrow', 'about_page_title', 'about_page_subtitle'].includes(f.key),
+                )
                 .map((f) => renderField(f, group.id))}
             </div>
           </fieldset>
@@ -359,6 +391,7 @@ export function ContentSettings({
               <legend className="px-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 Mission
               </legend>
+              <SectionThemeField sectionId="about_mission" settings={settings} />
               {group.fields
                 .filter((f) => f.key.startsWith('about_mission'))
                 .map((f) => renderField(f, group.id))}
@@ -367,6 +400,7 @@ export function ContentSettings({
               <legend className="px-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 Vision
               </legend>
+              <SectionThemeField sectionId="about_vision" settings={settings} />
               {group.fields
                 .filter((f) => f.key.startsWith('about_vision'))
                 .map((f) => renderField(f, group.id))}
@@ -377,20 +411,59 @@ export function ContentSettings({
             <legend className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               Company story
             </legend>
+            <SectionThemeField sectionId="about_story" settings={settings} />
             <div className="grid gap-4 sm:grid-cols-2">
               {group.fields
                 .filter((f) =>
-                  [
-                    'about_story_eyebrow',
-                    'about_story_title',
-                    'about_stats_title',
-                  ].includes(f.key),
+                  ['about_story_eyebrow', 'about_story_title'].includes(f.key),
                 )
                 .map((f) => renderField(f, group.id))}
             </div>
             {group.fields
               .filter((f) => ['about_intro', 'about_secondary'].includes(f.key))
               .map((f) => renderField(f, group.id))}
+          </fieldset>
+
+          <fieldset className="space-y-3">
+            <legend className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Contact CTA
+            </legend>
+            <SectionThemeField sectionId="about_cta" settings={settings} />
+            {group.fields
+              .filter((f) => f.key.startsWith('about_cta'))
+              .map((f) => renderField(f, group.id))}
+          </fieldset>
+
+          <fieldset className="space-y-3 rounded-lg border border-brand-gold-500/30 bg-brand-gold-500/5 p-4">
+            <legend className="px-1 text-[11px] font-semibold uppercase tracking-wider text-primary-800">
+              Software products promo
+            </legend>
+            <p className="text-xs text-slate-600">
+              Products-style banner on the about page — links to /products. Toggle visibility under
+              Layout → About.
+            </p>
+            <SectionThemeField sectionId="about_products_promo" settings={settings} />
+            <Input
+              name="about_products_promo_eyebrow"
+              label="Eyebrow"
+              defaultValue={getValue(settings, 'about_products_promo_eyebrow') || 'Software products'}
+            />
+            <Input
+              name="about_products_promo_title"
+              label="Title"
+              defaultValue={
+                getValue(settings, 'about_products_promo_title') || 'Enterprise Software Products'
+              }
+            />
+            <Textarea
+              name="about_products_promo_subtitle"
+              label="Subtitle"
+              rows={3}
+              defaultValue={
+                getValue(settings, 'about_products_promo_subtitle') ||
+                'Ready-to-deploy and customizable solutions built for real-world operations — from document management to industry-specific platforms.'
+              }
+            />
           </fieldset>
         </>
       ) : group.id === 'home' && compact ? (

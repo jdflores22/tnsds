@@ -2,7 +2,7 @@ import { cn } from '@/utils/cn';
 
 export function sectionSurfaceClass(dark: boolean, lightVariant: 'white' | 'muted' = 'white') {
   return cn(
-    'border-b py-16 sm:py-20',
+    'border-b py-16 sm:py-20 lg:py-24',
     dark
       ? 'border-white/10 bg-primary-900 text-white circuit-bg'
       : lightVariant === 'muted'
