@@ -21,6 +21,8 @@ public class SmtpSettingsProvider : ISmtpSettingsProvider
     {
         var keys = new[]
         {
+            SmtpSettingsKeys.Provider,
+            SmtpSettingsKeys.HostingerApiToken,
             SmtpSettingsKeys.Host,
             SmtpSettingsKeys.Port,
             SmtpSettingsKeys.Username,
@@ -37,6 +39,8 @@ public class SmtpSettingsProvider : ISmtpSettingsProvider
         if (string.IsNullOrWhiteSpace(companyEmail))
             companyEmail = "info@trans-net.com";
 
+        var dbProvider = settings.GetValueOrDefault(SmtpSettingsKeys.Provider)?.Trim();
+        var dbApiToken = settings.GetValueOrDefault(SmtpSettingsKeys.HostingerApiToken);
         var dbHost = settings.GetValueOrDefault(SmtpSettingsKeys.Host)?.Trim();
         var dbUsername = settings.GetValueOrDefault(SmtpSettingsKeys.Username)?.Trim();
         var dbPassword = settings.GetValueOrDefault(SmtpSettingsKeys.Password);
@@ -49,6 +53,12 @@ public class SmtpSettingsProvider : ISmtpSettingsProvider
         var envPassword = env["Password"];
         var envFrom = env["From"]?.Trim() ?? env["FromEmail"]?.Trim();
 
+        var hostingerEnv = _configuration["HostingerMail:ApiToken"]?.Trim();
+
+        var apiToken = FirstNonEmpty(dbApiToken, hostingerEnv);
+        var provider = FirstNonEmpty(dbProvider, !string.IsNullOrWhiteSpace(apiToken) ? SmtpSettingsKeys.ProviderHostingerApi : SmtpSettingsKeys.ProviderSmtp)
+            ?? SmtpSettingsKeys.ProviderSmtp;
+
         var host = FirstNonEmpty(dbHost, envHost);
         var explicitUsername = FirstNonEmpty(dbUsername, envUsername);
         var usesContactEmail = string.IsNullOrWhiteSpace(explicitUsername);
@@ -58,15 +68,20 @@ public class SmtpSettingsProvider : ISmtpSettingsProvider
         var enableSsl = ParseBool(dbEnableSslRaw, env["EnableSsl"], defaultValue: true);
         var from = FirstNonEmpty(username, envFrom) ?? companyEmail;
 
-        var hasDbHost = !string.IsNullOrWhiteSpace(dbHost);
-        var source = hasDbHost || !string.IsNullOrWhiteSpace(dbUsername) || !string.IsNullOrWhiteSpace(dbPassword)
+        var hasDbConfig = !string.IsNullOrWhiteSpace(dbHost)
+            || !string.IsNullOrWhiteSpace(dbUsername)
+            || !string.IsNullOrWhiteSpace(dbPassword)
+            || !string.IsNullOrWhiteSpace(dbApiToken);
+        var source = hasDbConfig
             ? "database"
-            : !string.IsNullOrWhiteSpace(envHost)
+            : !string.IsNullOrWhiteSpace(envHost) || !string.IsNullOrWhiteSpace(hostingerEnv)
                 ? "environment"
                 : "database";
 
         return new SmtpSettings
         {
+            Provider = provider,
+            HostingerApiToken = apiToken,
             Host = host,
             Port = port,
             Username = username,
@@ -81,22 +96,51 @@ public class SmtpSettingsProvider : ISmtpSettingsProvider
 
     public EmailConfigurationStatus BuildStatus(SmtpSettings settings)
     {
-        string? hint = null;
+        if (settings.UsesHostingerApi)
+        {
+            string? hint = null;
+            if (string.IsNullOrWhiteSpace(settings.HostingerApiToken))
+            {
+                hint = "Add your Hostinger Mail API token in Admin → Settings → Contact.";
+            }
+            else if (settings.UsesContactEmailAsLogin)
+            {
+                hint = $"Using Hostinger Mail API. Send-as follows contact email ({settings.CompanyEmail}) when that mailbox is included in your token.";
+            }
+
+            return new EmailConfigurationStatus
+            {
+                IsConfigured = !string.IsNullOrWhiteSpace(settings.HostingerApiToken),
+                Provider = SmtpSettingsKeys.ProviderHostingerApi,
+                Host = "api.mail.hostinger.com",
+                Port = 443,
+                From = settings.From,
+                Username = settings.Username,
+                EnableSsl = true,
+                ConfigurationHint = hint,
+                ConfigSource = settings.Source,
+                UsesContactEmailAsLogin = settings.UsesContactEmailAsLogin,
+                HasPassword = false,
+                HasApiToken = !string.IsNullOrWhiteSpace(settings.HostingerApiToken),
+            };
+        }
+
+        string? smtpHint = null;
         if (string.IsNullOrWhiteSpace(settings.Host))
         {
-            hint = "Set SMTP server in Admin → Settings → Contact, or use Railway env vars Smtp__Host, Smtp__Username, Smtp__Password.";
+            smtpHint = "Set SMTP server in Admin → Settings → Contact, or switch to Hostinger Mail API.";
         }
         else if (string.IsNullOrWhiteSpace(settings.Password))
         {
-            hint = "SMTP password is missing. Add it in Admin → Settings → Contact (SMTP password field).";
+            smtpHint = "SMTP password is missing. Add it in Admin → Settings → Contact.";
         }
         else if (!string.Equals(settings.From, settings.Username, StringComparison.OrdinalIgnoreCase))
         {
-            hint = "SMTP login must match the sender address. Leave SMTP login blank to use the contact email automatically.";
+            smtpHint = "SMTP login must match the sender address. Leave SMTP login blank to use the contact email automatically.";
         }
         else if (settings.UsesContactEmailAsLogin)
         {
-            hint = $"Using contact email ({settings.CompanyEmail}) as SMTP login. Update the SMTP password if you change the contact email.";
+            smtpHint = $"Using contact email ({settings.CompanyEmail}) as SMTP login. Update the SMTP password if you change the contact email.";
         }
 
         return new EmailConfigurationStatus
@@ -104,12 +148,17 @@ public class SmtpSettingsProvider : ISmtpSettingsProvider
             IsConfigured = !string.IsNullOrWhiteSpace(settings.Host)
                 && !string.IsNullOrWhiteSpace(settings.Username)
                 && !string.IsNullOrWhiteSpace(settings.Password),
+            Provider = SmtpSettingsKeys.ProviderSmtp,
             Host = settings.Host,
             Port = settings.Port,
             From = settings.From,
             Username = settings.Username,
             EnableSsl = settings.EnableSsl,
-            ConfigurationHint = hint,
+            ConfigurationHint = smtpHint,
+            ConfigSource = settings.Source,
+            UsesContactEmailAsLogin = settings.UsesContactEmailAsLogin,
+            HasPassword = !string.IsNullOrWhiteSpace(settings.Password),
+            HasApiToken = false,
         };
     }
 

@@ -29,6 +29,7 @@ public class EmailController : ControllerBase
         return Ok(ApiResponse<EmailStatusDto>.Ok(new EmailStatusDto
         {
             IsConfigured = config.IsConfigured,
+            Provider = config.Provider,
             Host = config.Host,
             Port = config.Port,
             From = config.From,
@@ -39,6 +40,7 @@ public class EmailController : ControllerBase
             ConfigSource = config.ConfigSource,
             UsesContactEmailAsLogin = config.UsesContactEmailAsLogin,
             HasPassword = config.HasPassword,
+            HasApiToken = config.HasApiToken,
         }));
     }
 

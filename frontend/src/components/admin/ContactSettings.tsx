@@ -40,6 +40,16 @@ const SMTP_FIELDS = [
   },
 ] as const;
 
+const EMAIL_DELIVERY_KEYS = ['email_provider', 'hostinger_mail_api_token', ...SMTP_FIELDS.map((f) => f.key)] as const;
+
+function isEmailSettingKey(key: string) {
+  return key === 'email_provider' || key.startsWith('smtp_') || key.startsWith('hostinger_');
+}
+
+function isSecretEmailValue(key: string, value: string) {
+  return (key === 'smtp_password' || key === 'hostinger_mail_api_token') && (value === '********' || !value.trim());
+}
+
 const OFFICE_HOURS_FIELDS = [
   { key: 'contact_office_hours_title', label: 'Office hours title', default: 'Office hours' },
   {
@@ -64,7 +74,7 @@ const MAP_FIELD = {
 
 const ALL_SETTING_KEYS = [
   ...CONTACT_FIELDS.map((f) => f.key),
-  ...SMTP_FIELDS.map((f) => f.key),
+  ...EMAIL_DELIVERY_KEYS,
   ...OFFICE_HOURS_FIELDS.map((f) => f.key),
   MAP_FIELD.key,
 ] as const;
@@ -83,14 +93,14 @@ export function ContactSettings() {
   );
 
   const saveField = async (key: string, value: string) => {
-    if (key === 'smtp_password' && (value === '********' || !value.trim())) {
+    if (isSecretEmailValue(key, value)) {
       return;
     }
 
     const normalizedValue =
       key === MAP_FIELD.key ? normalizeGoogleMapEmbedInput(value) : value;
-    const group = key.startsWith('smtp_') ? 'email' : 'contact';
-    const isPublic = !key.startsWith('smtp_');
+    const group = isEmailSettingKey(key) ? 'email' : 'contact';
+    const isPublic = !isEmailSettingKey(key);
     const existing = settings?.find((s) => s.key === key);
 
     if (existing) {
@@ -98,7 +108,7 @@ export function ContactSettings() {
         id: existing.id,
         data: { value: normalizedValue, group, isPublic },
       });
-    } else if (normalizedValue.trim() || key === 'smtp_username') {
+    } else if (normalizedValue.trim() || key === 'smtp_username' || key === 'email_provider') {
       await createMutation.mutateAsync({
         key,
         value: normalizedValue,
@@ -121,7 +131,7 @@ export function ContactSettings() {
 
   const handleSendTestEmail = async () => {
     try {
-      const result = await testEmailMutation.mutateAsync();
+      const result = await testEmailMutation.mutateAsync(undefined);
       if (result.success) {
         toast.success('Test email sent', result.message);
         return;
@@ -154,6 +164,8 @@ export function ContactSettings() {
   }
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
+  const emailProvider = values.email_provider || 'hostinger_api';
+  const usesHostingerApi = emailProvider === 'hostinger_api';
 
   return (
     <SettingsPanel
@@ -189,9 +201,9 @@ export function ContactSettings() {
           <div className="sm:col-span-2 rounded-lg border border-slate-200 bg-slate-50/80 p-4">
             <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-slate-800">Email delivery (SMTP)</p>
+                <p className="text-sm font-semibold text-slate-800">Email delivery</p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Saved in the database — no server restart needed when you change the contact email. Messages are always stored in Admin → Messages.
+                  Hostinger Mail API (recommended) uses HTTPS and works on Railway. SMTP is a fallback. Changing contact email updates who receives notifications and which mailbox sends (when login is blank).
                 </p>
               </div>
               <Button
@@ -207,24 +219,62 @@ export function ContactSettings() {
             </div>
 
             <div className="mb-4 grid gap-4 sm:grid-cols-2">
-              {SMTP_FIELDS.map(({ key, label, placeholder, ...rest }) => (
-                <div key={key} className={key === 'smtp_password' ? 'sm:col-span-2' : undefined}>
+              <div className="sm:col-span-2">
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">Delivery method</label>
+                <select
+                  name="email_provider"
+                  defaultValue={emailProvider}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold-400/30"
+                >
+                  <option value="hostinger_api">Hostinger Mail API (recommended)</option>
+                  <option value="smtp">SMTP</option>
+                </select>
+              </div>
+
+              {usesHostingerApi ? (
+                <div className="sm:col-span-2">
                   <Input
-                    name={key}
-                    label={label}
-                    placeholder={placeholder}
-                    defaultValue={key === 'smtp_password' && values[key] === '********' ? '' : values[key]}
-                    {...('type' in rest ? { type: rest.type } : {})}
-                    {...('inputMode' in rest ? { inputMode: rest.inputMode } : {})}
+                    name="hostinger_mail_api_token"
+                    label="Hostinger Mail API token"
+                    type="password"
+                    placeholder="Paste token from hPanel → Agentic mail → API"
+                    defaultValue={
+                      values.hostinger_mail_api_token === '********' ? '' : values.hostinger_mail_api_token
+                    }
                   />
+                  <p className="mt-1.5 text-xs text-slate-500">
+                    Create a token in{' '}
+                    <a
+                      href="https://www.hostinger.com/support/how-to-use-agentic-mail-in-hpanel/"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium text-primary-700 underline-offset-2 hover:underline"
+                    >
+                      Hostinger Agentic Mail
+                    </a>
+                    . Include the mailbox that matches your contact email.
+                  </p>
                 </div>
-              ))}
+              ) : (
+                SMTP_FIELDS.map(({ key, label, placeholder, ...rest }) => (
+                  <div key={key} className={key === 'smtp_password' ? 'sm:col-span-2' : undefined}>
+                    <Input
+                      name={key}
+                      label={label}
+                      placeholder={placeholder}
+                      defaultValue={key === 'smtp_password' && values[key] === '********' ? '' : values[key]}
+                      {...('type' in rest ? { type: rest.type } : {})}
+                      {...('inputMode' in rest ? { inputMode: rest.inputMode } : {})}
+                    />
+                  </div>
+                ))
+              )}
             </div>
 
             {emailStatusLoading ? (
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <Spinner size="sm" />
-                Checking SMTP configuration…
+                Checking email configuration…
               </div>
             ) : emailStatus ? (
               <div className="space-y-2 text-sm">
@@ -233,13 +283,15 @@ export function ContactSettings() {
                     <>
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
                       <span className="text-emerald-800">
-                        Ready to send via {emailStatus.host}:{emailStatus.port}
+                        {emailStatus.provider === 'hostinger_api'
+                          ? `Ready to send via Hostinger Mail API`
+                          : `Ready to send via ${emailStatus.host}:${emailStatus.port}`}
                       </span>
                     </>
                   ) : (
                     <>
                       <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
-                      <span className="text-amber-800">SMTP not fully configured</span>
+                      <span className="text-amber-800">Email delivery not fully configured</span>
                     </>
                   )}
                 </div>
@@ -252,7 +304,10 @@ export function ContactSettings() {
                     <span className="text-slate-500"> (follows contact email)</span>
                   )}
                 </p>
-                {!emailStatus.hasPassword && (
+                {emailStatus.provider === 'hostinger_api' && !emailStatus.hasApiToken && (
+                  <p className="text-xs text-amber-800">Add your Hostinger Mail API token and save.</p>
+                )}
+                {emailStatus.provider === 'smtp' && !emailStatus.hasPassword && (
                   <p className="text-xs text-amber-800">Add an SMTP password and save to enable sending.</p>
                 )}
                 {!emailStatus.isConfigured && emailStatus.configurationHint && (

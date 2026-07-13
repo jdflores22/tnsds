@@ -9,6 +9,7 @@ public class SendTestEmailDto
 public class EmailStatusDto
 {
     public bool IsConfigured { get; set; }
+    public string Provider { get; set; } = "smtp";
     public string? Host { get; set; }
     public int Port { get; set; }
     public string? From { get; set; }
@@ -19,6 +20,7 @@ public class EmailStatusDto
     public string ConfigSource { get; set; } = "database";
     public bool UsesContactEmailAsLogin { get; set; }
     public bool HasPassword { get; set; }
+    public bool HasApiToken { get; set; }
 }
 
 public class EmailTestResultDto

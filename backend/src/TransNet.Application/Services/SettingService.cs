@@ -62,6 +62,15 @@ public class SiteSettingService : ISiteSettingService
             return Map(entity);
         }
 
+        if (entity.Key == SmtpSettingsKeys.HostingerApiToken && (dto.Value == "********" || string.IsNullOrWhiteSpace(dto.Value)))
+        {
+            entity.Group = dto.Group;
+            entity.IsPublic = dto.IsPublic;
+            entity.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync(cancellationToken);
+            return Map(entity);
+        }
+
         entity.Value = dto.Value;
         entity.Group = dto.Group;
         entity.IsPublic = dto.IsPublic;
@@ -84,7 +93,7 @@ public class SiteSettingService : ISiteSettingService
     {
         Id = entity.Id,
         Key = entity.Key,
-        Value = entity.Key == SmtpSettingsKeys.Password && !string.IsNullOrEmpty(entity.Value)
+        Value = SmtpSettingsKeys.IsSecretKey(entity.Key) && !string.IsNullOrEmpty(entity.Value)
             ? "********"
             : entity.Value,
         Group = entity.Group,

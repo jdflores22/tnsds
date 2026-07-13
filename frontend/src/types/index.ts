@@ -378,6 +378,7 @@ export type UpdateSiteSetting = Partial<CreateSiteSetting>;
 
 export interface EmailStatus {
   isConfigured: boolean;
+  provider: string;
   host?: string | null;
   port: number;
   from?: string | null;
@@ -388,6 +389,7 @@ export interface EmailStatus {
   configSource: string;
   usesContactEmailAsLogin: boolean;
   hasPassword: boolean;
+  hasApiToken: boolean;
 }
 
 export interface EmailTestResult {

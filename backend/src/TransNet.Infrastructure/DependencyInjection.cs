@@ -20,6 +20,7 @@ public static class DependencyInjection
 
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddHttpClient<HostingerMailClient>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         var redisConnection = configuration.GetConnectionString("Redis");

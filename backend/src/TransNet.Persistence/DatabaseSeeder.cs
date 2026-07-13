@@ -570,6 +570,8 @@ public class DatabaseSeeder
             ("header_style", "navy", "branding", true),
             ("header_bg_color", "#0a1a2e", "branding", true),
             ("company_email", "info@trans-net.com", "contact", true),
+            ("email_provider", "hostinger_api", "email", false),
+            ("hostinger_mail_api_token", "", "email", false),
             ("smtp_host", "smtp.hostinger.com", "email", false),
             ("smtp_port", "465", "email", false),
             ("smtp_username", "", "email", false),

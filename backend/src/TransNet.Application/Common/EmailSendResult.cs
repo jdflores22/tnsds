@@ -32,9 +32,10 @@ public sealed class EmailSendResult
     };
 }
 
-public sealed class EmailConfigurationStatus
+public sealed record EmailConfigurationStatus
 {
     public bool IsConfigured { get; init; }
+    public string Provider { get; init; } = SmtpSettingsKeys.ProviderSmtp;
     public string? Host { get; init; }
     public int Port { get; init; }
     public string? From { get; init; }
@@ -44,4 +45,5 @@ public sealed class EmailConfigurationStatus
     public string ConfigSource { get; init; } = "database";
     public bool UsesContactEmailAsLogin { get; init; }
     public bool HasPassword { get; init; }
+    public bool HasApiToken { get; init; }
 }
