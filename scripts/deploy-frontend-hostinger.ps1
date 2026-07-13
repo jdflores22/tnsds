@@ -61,26 +61,31 @@ function Assert-ProductionBuild {
         Write-Host 'Warning: dist htaccess file missing - SPA routes may 404 on Hostinger.' -ForegroundColor Yellow
     }
 
-    $distJs = Get-ChildItem -Path (Join-Path $DistPath "assets") -Filter "index-*.js" -ErrorAction SilentlyContinue |
-        Select-Object -First 1
-    if (-not $distJs) {
-        throw "No index-*.js bundle found in dist/assets/"
+    $assetJs = Get-ChildItem -Path (Join-Path $DistPath "assets") -Filter "*.js" -ErrorAction SilentlyContinue
+    if (-not $assetJs) {
+        throw "No JS bundles found in dist/assets/"
     }
 
-    if (Select-String -Path $distJs.FullName -Pattern "localhost:5000" -Quiet) {
+    if ($assetJs | ForEach-Object { Select-String -Path $_.FullName -Pattern "localhost:5000/api/v1" -Quiet } | Where-Object { $_ }) {
         throw @"
-dist/ was built for local dev (localhost:5000 found in bundle).
+dist/ was built for local dev (localhost:5000/api/v1 found in bundle).
 Run without -SkipBuild so the script rebuilds with ApiBaseUrl=$ExpectedApiUrl
 "@
     }
 
     $apiHost = ([uri]$ExpectedApiUrl).Host
-    if ($apiHost -and -not (Select-String -Path $distJs.FullName -Pattern ([regex]::Escape($apiHost)) -Quiet)) {
+    $hostFound = $assetJs | ForEach-Object {
+        Select-String -Path $_.FullName -Pattern ([regex]::Escape($apiHost)) -Quiet
+    } | Where-Object { $_ }
+
+    if ($apiHost -and -not $hostFound) {
         $msg = 'Bundle does not contain expected API host ''' + $apiHost + '''. Rebuild with -ApiBaseUrl or check frontend/.env.production.'
         throw $msg
     }
 
-    Write-Host ("  dist/ OK: {0} (API host: {1})" -f $distJs.Name, $apiHost) -ForegroundColor DarkGray
+    $entryJs = ($assetJs | Where-Object { $_.Name -like "index-*.js" } | Sort-Object Name -Descending | Select-Object -First 1).Name
+    if (-not $entryJs) { $entryJs = $assetJs[0].Name }
+    Write-Host ("  dist/ OK ({0}, API host: {1})" -f $entryJs, $apiHost) -ForegroundColor DarkGray
 }
 
 function Test-SshConnection {

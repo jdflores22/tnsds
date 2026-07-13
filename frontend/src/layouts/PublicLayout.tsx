@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
@@ -20,6 +21,11 @@ const pageVariants = {
 
 export function PublicLayout() {
   const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }, [pathname]);
+
   const pageKey = pathnameToPageKey(pathname);
   const { isLoading: visibilityLoading, isPublished, maintenanceMessage } = usePageVisibility(pageKey);
   // Wait for site settings too, so section headings/visibility never flash their

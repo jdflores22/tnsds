@@ -50,10 +50,7 @@ public class ContactMessageService : IContactMessageService
             $"Thank you {dto.Name}, we have received your message and will respond shortly.",
             cancellationToken);
 
-        var adminEmail = await _context.SiteSettings
-            .Where(s => s.Key == "company_email")
-            .Select(s => s.Value)
-            .FirstOrDefaultAsync(cancellationToken) ?? "info@trans-net.com";
+        var adminEmail = await SiteSettingsReader.GetCompanyEmailAsync(_context, cancellationToken);
 
         await _emailService.SendAsync(
             adminEmail,

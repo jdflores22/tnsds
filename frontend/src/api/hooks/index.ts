@@ -27,6 +27,8 @@ import type {
   CreateTestimonial,
   CreateUser,
   DashboardStats,
+  EmailStatus,
+  EmailTestResult,
   Industry,
   FaqItem,
   SiteStat,
@@ -561,6 +563,25 @@ export function useDeleteMedia() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['media'] });
+    },
+  });
+}
+
+export function useEmailStatus() {
+  return useQuery({
+    queryKey: ['email', 'status'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<ApiResponse<EmailStatus>>('/email/status');
+      return data.data!;
+    },
+  });
+}
+
+export function useSendTestEmail() {
+  return useMutation({
+    mutationFn: async (to?: string) => {
+      const { data } = await apiClient.post<ApiResponse<EmailTestResult>>('/email/test', to ? { to } : {});
+      return data.data!;
     },
   });
 }

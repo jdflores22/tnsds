@@ -21,12 +21,14 @@ interface ContactFormCardProps {
   isDark?: boolean;
   formTitle?: string;
   formSubtitle?: string;
+  recipientEmail?: string;
 }
 
 export function ContactFormCard({
   isDark = false,
   formTitle = 'Send us a message',
   formSubtitle = 'Fill out the form and our team will get back to you shortly.',
+  recipientEmail,
 }: ContactFormCardProps) {
   const mutation = useSubmitContact();
 
@@ -55,6 +57,18 @@ export function ContactFormCard({
       {formSubtitle && (
         <p className={cn('mt-2 text-sm leading-relaxed', isDark ? 'text-slate-300' : 'text-slate-600')}>
           {formSubtitle}
+        </p>
+      )}
+      {recipientEmail && (
+        <p className={cn('mt-2 text-xs leading-relaxed', isDark ? 'text-slate-400' : 'text-slate-500')}>
+          Submissions are sent to{' '}
+          <a
+            href={`mailto:${recipientEmail}`}
+            className={cn('font-medium underline-offset-2 hover:underline', isDark ? 'text-brand-gold-400' : 'text-primary-700')}
+          >
+            {recipientEmail}
+          </a>
+          .
         </p>
       )}
 

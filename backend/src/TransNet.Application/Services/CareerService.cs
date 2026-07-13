@@ -139,10 +139,7 @@ public class JobApplicationService : IJobApplicationService
         var career = await _context.Careers.FirstOrDefaultAsync(c => c.Id == dto.CareerId, cancellationToken);
         entity.Career = career!;
 
-        var adminEmail = await _context.SiteSettings
-            .Where(s => s.Key == "company_email")
-            .Select(s => s.Value)
-            .FirstOrDefaultAsync(cancellationToken) ?? "info@trans-net.com";
+        var adminEmail = await SiteSettingsReader.GetCompanyEmailAsync(_context, cancellationToken);
 
         await _emailService.SendAsync(
             dto.Email,

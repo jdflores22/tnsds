@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Globe, Mail, MapPin, Phone } from 'lucide-react';
-import { useSiteSettings, useUpdateSiteSetting, useCreateSiteSetting } from '@/api/hooks';
+import { AlertCircle, CheckCircle2, Globe, Mail, MapPin, Phone, Send } from 'lucide-react';
+import { useEmailStatus, useSendTestEmail, useSiteSettings, useUpdateSiteSetting, useCreateSiteSetting } from '@/api/hooks';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Spinner } from '@/components/ui/Spinner';
 import { SaveFeedback, SettingsPanel } from '@/components/admin/SettingsPanel';
 import { normalizeGoogleMapEmbedInput } from '@/utils/media';
+import { toast } from '@/store/toastStore';
+import { isAxiosError } from 'axios';
 
 const CONTACT_FIELDS = [
   { key: 'company_email', label: 'Email', icon: Mail, placeholder: 'info@trans-net.com' },
@@ -39,6 +41,8 @@ const MAP_FIELD = {
 
 export function ContactSettings() {
   const { data: settings, isLoading } = useSiteSettings();
+  const { data: emailStatus, isLoading: emailStatusLoading } = useEmailStatus();
+  const testEmailMutation = useSendTestEmail();
   const updateMutation = useUpdateSiteSetting();
   const createMutation = useCreateSiteSetting();
   const [saved, setSaved] = useState(false);
@@ -81,6 +85,22 @@ export function ContactSettings() {
     setSaved(true);
   };
 
+  const handleSendTestEmail = async () => {
+    try {
+      const result = await testEmailMutation.mutateAsync();
+      toast.success('Test email sent', result.message);
+    } catch (error) {
+      const apiMessage = isAxiosError(error)
+        ? error.response?.data?.errors?.[0] ??
+          error.response?.data?.data?.message ??
+          error.message
+        : error instanceof Error
+          ? error.message
+          : 'Test email failed';
+      toast.error('Test email failed', apiMessage);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
@@ -95,7 +115,7 @@ export function ContactSettings() {
     <SettingsPanel
       icon={Phone}
       title="Contact information"
-      description="Used on the contact page, footer, and homepage hero bar."
+      description="Used on the contact page, footer, and homepage hero bar. The contact form sends notifications to the email below."
       footer={
         <>
           <Button type="submit" form="contact-settings-form" isLoading={isSaving}>
@@ -114,8 +134,77 @@ export function ContactSettings() {
                 {label}
               </label>
               <Input name={key} defaultValue={values[key]} placeholder={placeholder} />
+              {key === 'company_email' && (
+                <p className="mt-1.5 text-xs text-slate-500">
+                  Contact form submissions are emailed to this address (when SMTP is configured).
+                </p>
+              )}
             </div>
           ))}
+
+          <div className="sm:col-span-2 rounded-lg border border-slate-200 bg-slate-50/80 p-4">
+            <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Email delivery (SMTP)</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Messages are always saved in Admin → Messages. Email notifications require SMTP on the API server.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                isLoading={testEmailMutation.isPending}
+                onClick={() => void handleSendTestEmail()}
+              >
+                <Send className="h-4 w-4" />
+                Send test email
+              </Button>
+            </div>
+
+            {emailStatusLoading ? (
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <Spinner size="sm" />
+                Checking SMTP configuration…
+              </div>
+            ) : emailStatus ? (
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  {emailStatus.isConfigured ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                      <span className="text-emerald-800">
+                        SMTP configured ({emailStatus.host}:{emailStatus.port})
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+                      <span className="text-amber-800">SMTP not configured — emails will not send</span>
+                    </>
+                  )}
+                </div>
+                <p className="text-xs text-slate-600">
+                  Test recipient: <span className="font-medium">{emailStatus.companyEmail}</span>
+                  {emailStatus.from ? (
+                    <>
+                      {' '}
+                      · From: <span className="font-medium">{emailStatus.from}</span>
+                    </>
+                  ) : null}
+                </p>
+                {!emailStatus.isConfigured && emailStatus.configurationHint && (
+                  <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    {emailStatus.configurationHint} Locally, set values in{' '}
+                    <code className="rounded bg-white px-1">appsettings.Development.json</code> or Railway env vars{' '}
+                    <code className="rounded bg-white px-1">Smtp__Host</code>,{' '}
+                    <code className="rounded bg-white px-1">Smtp__Username</code>,{' '}
+                    <code className="rounded bg-white px-1">Smtp__Password</code>.
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </div>
 
           <div className="sm:col-span-2 mt-2 border-t border-slate-100 pt-5">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">

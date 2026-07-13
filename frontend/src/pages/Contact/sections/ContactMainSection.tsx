@@ -175,6 +175,7 @@ export function ContactMainSection() {
               isDark={isDark}
               formTitle={formTitle}
               formSubtitle={formSubtitle}
+              recipientEmail={email}
             />
           </div>
         </div>

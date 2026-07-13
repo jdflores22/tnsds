@@ -375,3 +375,21 @@ export type UpdateSeoSetting = Partial<CreateSeoSetting>;
 
 export type CreateSiteSetting = Omit<SiteSetting, 'id' | 'updatedAt'>;
 export type UpdateSiteSetting = Partial<CreateSiteSetting>;
+
+export interface EmailStatus {
+  isConfigured: boolean;
+  host?: string | null;
+  port: number;
+  from?: string | null;
+  username?: string | null;
+  enableSsl: boolean;
+  companyEmail: string;
+  configurationHint?: string | null;
+}
+
+export interface EmailTestResult {
+  success: boolean;
+  outcome: string;
+  to: string;
+  message: string;
+}
