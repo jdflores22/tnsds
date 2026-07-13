@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<ISubscriberService, SubscriberService>();
         services.AddScoped<ISiteSettingService, SiteSettingService>();
         services.AddScoped<ISeoSettingService, SeoSettingService>();
+        services.AddScoped<ISmtpSettingsProvider, SmtpSettingsProvider>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IActivityLogService, ActivityLogService>();
         services.AddScoped<IUserService, UserService>();

@@ -385,6 +385,9 @@ export interface EmailStatus {
   enableSsl: boolean;
   companyEmail: string;
   configurationHint?: string | null;
+  configSource: string;
+  usesContactEmailAsLogin: boolean;
+  hasPassword: boolean;
 }
 
 export interface EmailTestResult {

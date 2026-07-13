@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TransNet.Application.Common;
 using TransNet.Application.DTOs.Settings;
 using TransNet.Application.Interfaces;
 using TransNet.Domain.Entities;
@@ -52,6 +53,15 @@ public class SiteSettingService : ISiteSettingService
         var entity = await _context.SiteSettings.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
         if (entity is null) return null;
 
+        if (entity.Key == SmtpSettingsKeys.Password && (dto.Value == "********" || string.IsNullOrWhiteSpace(dto.Value)))
+        {
+            entity.Group = dto.Group;
+            entity.IsPublic = dto.IsPublic;
+            entity.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync(cancellationToken);
+            return Map(entity);
+        }
+
         entity.Value = dto.Value;
         entity.Group = dto.Group;
         entity.IsPublic = dto.IsPublic;
@@ -74,7 +84,9 @@ public class SiteSettingService : ISiteSettingService
     {
         Id = entity.Id,
         Key = entity.Key,
-        Value = entity.Value,
+        Value = entity.Key == SmtpSettingsKeys.Password && !string.IsNullOrEmpty(entity.Value)
+            ? "********"
+            : entity.Value,
         Group = entity.Group,
         IsPublic = entity.IsPublic,
         UpdatedAt = entity.UpdatedAt

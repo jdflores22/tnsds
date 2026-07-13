@@ -41,4 +41,7 @@ public sealed class EmailConfigurationStatus
     public string? Username { get; init; }
     public bool EnableSsl { get; init; }
     public string? ConfigurationHint { get; init; }
+    public string ConfigSource { get; init; } = "database";
+    public bool UsesContactEmailAsLogin { get; init; }
+    public bool HasPassword { get; init; }
 }

@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { AlertCircle, CheckCircle2, Globe, Mail, MapPin, Phone, Send } from 'lucide-react';
-import { useEmailStatus, useSendTestEmail, useSiteSettings, useUpdateSiteSetting, useCreateSiteSetting } from '@/api/hooks';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  useEmailStatus,
+  useSendTestEmail,
+  useSiteSettings,
+  useUpdateSiteSetting,
+  useCreateSiteSetting,
+} from '@/api/hooks';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -15,6 +22,22 @@ const CONTACT_FIELDS = [
   { key: 'company_phone', label: 'Phone', icon: Phone, placeholder: '+1-800-TRANS-NET' },
   { key: 'company_website', label: 'Website', icon: Globe, placeholder: 'www.trans-net.com' },
   { key: 'company_address', label: 'Address', icon: MapPin, placeholder: 'Global Headquarters' },
+] as const;
+
+const SMTP_FIELDS = [
+  { key: 'smtp_host', label: 'SMTP server', placeholder: 'smtp.hostinger.com' },
+  { key: 'smtp_port', label: 'SMTP port', placeholder: '465', inputMode: 'numeric' as const },
+  {
+    key: 'smtp_username',
+    label: 'SMTP login email',
+    placeholder: 'Leave blank to use contact email above',
+  },
+  {
+    key: 'smtp_password',
+    label: 'SMTP password',
+    placeholder: 'Mailbox password (leave blank to keep current)',
+    type: 'password' as const,
+  },
 ] as const;
 
 const OFFICE_HOURS_FIELDS = [
@@ -39,7 +62,15 @@ const MAP_FIELD = {
   hint: 'Optional. Leave blank to auto-embed from your address. Or paste Google Maps → Share → Embed a map iframe src.',
 } as const;
 
+const ALL_SETTING_KEYS = [
+  ...CONTACT_FIELDS.map((f) => f.key),
+  ...SMTP_FIELDS.map((f) => f.key),
+  ...OFFICE_HOURS_FIELDS.map((f) => f.key),
+  MAP_FIELD.key,
+] as const;
+
 export function ContactSettings() {
+  const queryClient = useQueryClient();
   const { data: settings, isLoading } = useSiteSettings();
   const { data: emailStatus, isLoading: emailStatusLoading } = useEmailStatus();
   const testEmailMutation = useSendTestEmail();
@@ -48,27 +79,31 @@ export function ContactSettings() {
   const [saved, setSaved] = useState(false);
 
   const values = Object.fromEntries(
-    [...CONTACT_FIELDS, ...OFFICE_HOURS_FIELDS, MAP_FIELD].map(({ key }) => [
-      key,
-      settings?.find((s) => s.key === key)?.value ?? '',
-    ]),
+    ALL_SETTING_KEYS.map((key) => [key, settings?.find((s) => s.key === key)?.value ?? '']),
   );
 
   const saveField = async (key: string, value: string) => {
+    if (key === 'smtp_password' && (value === '********' || !value.trim())) {
+      return;
+    }
+
     const normalizedValue =
       key === MAP_FIELD.key ? normalizeGoogleMapEmbedInput(value) : value;
+    const group = key.startsWith('smtp_') ? 'email' : 'contact';
+    const isPublic = !key.startsWith('smtp_');
     const existing = settings?.find((s) => s.key === key);
+
     if (existing) {
       await updateMutation.mutateAsync({
         id: existing.id,
-        data: { value: normalizedValue, group: 'contact', isPublic: true },
+        data: { value: normalizedValue, group, isPublic },
       });
-    } else {
+    } else if (normalizedValue.trim() || key === 'smtp_username') {
       await createMutation.mutateAsync({
         key,
         value: normalizedValue,
-        group: 'contact',
-        isPublic: true,
+        group,
+        isPublic,
       });
     }
   };
@@ -78,17 +113,26 @@ export function ContactSettings() {
     setSaved(false);
     const formData = new FormData(e.currentTarget);
     await Promise.all(
-      [...CONTACT_FIELDS, ...OFFICE_HOURS_FIELDS, MAP_FIELD].map(({ key }) =>
-        saveField(key, String(formData.get(key) ?? '')),
-      ),
+      ALL_SETTING_KEYS.map((key) => saveField(key, String(formData.get(key) ?? ''))),
     );
+    await queryClient.invalidateQueries({ queryKey: ['email', 'status'] });
     setSaved(true);
   };
 
   const handleSendTestEmail = async () => {
     try {
       const result = await testEmailMutation.mutateAsync();
-      toast.success('Test email sent', result.message);
+      if (result.success) {
+        toast.success('Test email sent', result.message);
+        return;
+      }
+
+      const isNotConfigured = result.outcome === 'SkippedNotConfigured';
+      if (isNotConfigured) {
+        toast.warning('SMTP not configured', result.message);
+      } else {
+        toast.error('Test email failed', result.message);
+      }
     } catch (error) {
       const apiMessage = isAxiosError(error)
         ? error.response?.data?.errors?.[0] ??
@@ -115,11 +159,11 @@ export function ContactSettings() {
     <SettingsPanel
       icon={Phone}
       title="Contact information"
-      description="Used on the contact page, footer, and homepage hero bar. The contact form sends notifications to the email below."
+      description="Contact details shown on the site. Form notifications go to the contact email; SMTP settings below control outbound delivery."
       footer={
         <>
           <Button type="submit" form="contact-settings-form" isLoading={isSaving}>
-            Save contact info
+            Save contact & email settings
           </Button>
           <SaveFeedback saved={saved} isSaving={isSaving} />
         </>
@@ -136,18 +180,18 @@ export function ContactSettings() {
               <Input name={key} defaultValue={values[key]} placeholder={placeholder} />
               {key === 'company_email' && (
                 <p className="mt-1.5 text-xs text-slate-500">
-                  Contact form submissions are emailed to this address (when SMTP is configured).
+                  Contact form notifications are sent here. If SMTP login is blank, this address is also used to send mail.
                 </p>
               )}
             </div>
           ))}
 
           <div className="sm:col-span-2 rounded-lg border border-slate-200 bg-slate-50/80 p-4">
-            <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-slate-800">Email delivery (SMTP)</p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Messages are always saved in Admin → Messages. Email notifications require SMTP on the API server.
+                  Saved in the database — no server restart needed when you change the contact email. Messages are always stored in Admin → Messages.
                 </p>
               </div>
               <Button
@@ -162,6 +206,21 @@ export function ContactSettings() {
               </Button>
             </div>
 
+            <div className="mb-4 grid gap-4 sm:grid-cols-2">
+              {SMTP_FIELDS.map(({ key, label, placeholder, ...rest }) => (
+                <div key={key} className={key === 'smtp_password' ? 'sm:col-span-2' : undefined}>
+                  <Input
+                    name={key}
+                    label={label}
+                    placeholder={placeholder}
+                    defaultValue={key === 'smtp_password' && values[key] === '********' ? '' : values[key]}
+                    {...('type' in rest ? { type: rest.type } : {})}
+                    {...('inputMode' in rest ? { inputMode: rest.inputMode } : {})}
+                  />
+                </div>
+              ))}
+            </div>
+
             {emailStatusLoading ? (
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <Spinner size="sm" />
@@ -174,32 +233,31 @@ export function ContactSettings() {
                     <>
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
                       <span className="text-emerald-800">
-                        SMTP configured ({emailStatus.host}:{emailStatus.port})
+                        Ready to send via {emailStatus.host}:{emailStatus.port}
                       </span>
                     </>
                   ) : (
                     <>
                       <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
-                      <span className="text-amber-800">SMTP not configured — emails will not send</span>
+                      <span className="text-amber-800">SMTP not fully configured</span>
                     </>
                   )}
                 </div>
                 <p className="text-xs text-slate-600">
-                  Test recipient: <span className="font-medium">{emailStatus.companyEmail}</span>
-                  {emailStatus.from ? (
-                    <>
-                      {' '}
-                      · From: <span className="font-medium">{emailStatus.from}</span>
-                    </>
-                  ) : null}
+                  Notifications to: <span className="font-medium">{emailStatus.companyEmail}</span>
+                  {' · '}
+                  Send as:{' '}
+                  <span className="font-medium">{emailStatus.from ?? emailStatus.username ?? '—'}</span>
+                  {emailStatus.usesContactEmailAsLogin && (
+                    <span className="text-slate-500"> (follows contact email)</span>
+                  )}
                 </p>
+                {!emailStatus.hasPassword && (
+                  <p className="text-xs text-amber-800">Add an SMTP password and save to enable sending.</p>
+                )}
                 {!emailStatus.isConfigured && emailStatus.configurationHint && (
                   <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                    {emailStatus.configurationHint} Locally, set values in{' '}
-                    <code className="rounded bg-white px-1">appsettings.Development.json</code> or Railway env vars{' '}
-                    <code className="rounded bg-white px-1">Smtp__Host</code>,{' '}
-                    <code className="rounded bg-white px-1">Smtp__Username</code>,{' '}
-                    <code className="rounded bg-white px-1">Smtp__Password</code>.
+                    {emailStatus.configurationHint}
                   </p>
                 )}
               </div>

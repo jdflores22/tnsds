@@ -4,7 +4,7 @@ namespace TransNet.Application.Interfaces;
 
 public interface IEmailService
 {
-    EmailConfigurationStatus GetConfigurationStatus();
+    Task<EmailConfigurationStatus> GetConfigurationStatusAsync(CancellationToken cancellationToken = default);
 
     Task<EmailSendResult> SendAsync(string to, string subject, string body, CancellationToken cancellationToken = default);
 }

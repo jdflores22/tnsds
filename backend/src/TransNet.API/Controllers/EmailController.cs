@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using TransNet.Application.Common;
 using TransNet.Application.DTOs.Settings;
 using TransNet.Application.Interfaces;
-using TransNet.Domain.Interfaces;
 
 namespace TransNet.API.Controllers;
 
@@ -13,19 +12,19 @@ namespace TransNet.API.Controllers;
 public class EmailController : ControllerBase
 {
     private readonly IEmailService _emailService;
-    private readonly IApplicationDbContext _context;
+    private readonly ISmtpSettingsProvider _smtpSettings;
 
-    public EmailController(IEmailService emailService, IApplicationDbContext context)
+    public EmailController(IEmailService emailService, ISmtpSettingsProvider smtpSettings)
     {
         _emailService = emailService;
-        _context = context;
+        _smtpSettings = smtpSettings;
     }
 
     [HttpGet("status")]
     public async Task<ActionResult<ApiResponse<EmailStatusDto>>> GetStatus(CancellationToken cancellationToken)
     {
-        var config = _emailService.GetConfigurationStatus();
-        var companyEmail = await SiteSettingsReader.GetCompanyEmailAsync(_context, cancellationToken);
+        var config = await _emailService.GetConfigurationStatusAsync(cancellationToken);
+        var settings = await _smtpSettings.GetAsync(cancellationToken);
 
         return Ok(ApiResponse<EmailStatusDto>.Ok(new EmailStatusDto
         {
@@ -35,8 +34,11 @@ public class EmailController : ControllerBase
             From = config.From,
             Username = config.Username,
             EnableSsl = config.EnableSsl,
-            CompanyEmail = companyEmail,
+            CompanyEmail = settings.CompanyEmail,
             ConfigurationHint = config.ConfigurationHint,
+            ConfigSource = config.ConfigSource,
+            UsesContactEmailAsLogin = config.UsesContactEmailAsLogin,
+            HasPassword = config.HasPassword,
         }));
     }
 
@@ -45,13 +47,12 @@ public class EmailController : ControllerBase
         [FromBody] SendTestEmailDto? dto,
         CancellationToken cancellationToken)
     {
-        var config = _emailService.GetConfigurationStatus();
-        var companyEmail = await SiteSettingsReader.GetCompanyEmailAsync(_context, cancellationToken);
-        var to = string.IsNullOrWhiteSpace(dto?.To) ? companyEmail : dto!.To.Trim();
+        var settings = await _smtpSettings.GetAsync(cancellationToken);
+        var to = string.IsNullOrWhiteSpace(dto?.To) ? settings.CompanyEmail : dto!.To.Trim();
 
         if (string.IsNullOrWhiteSpace(to))
         {
-            return BadRequest(ApiResponse<EmailTestResultDto>.Fail("No recipient email. Set company_email in Contact settings or pass To in the request body."));
+            return BadRequest(ApiResponse<EmailTestResultDto>.Fail("No recipient email. Set the contact email in Admin → Settings → Contact."));
         }
 
         var result = await _emailService.SendAsync(
@@ -74,13 +75,6 @@ public class EmailController : ControllerBase
             },
         };
 
-        if (result.IsSent)
-            return Ok(ApiResponse<EmailTestResultDto>.Ok(response));
-
-        return BadRequest(new ApiResponse<EmailTestResultDto>
-        {
-            Data = response,
-            Errors = new List<string> { response.Message },
-        });
+        return Ok(ApiResponse<EmailTestResultDto>.Ok(response));
     }
 }

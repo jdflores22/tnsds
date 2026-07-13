@@ -16,6 +16,9 @@ public class EmailStatusDto
     public bool EnableSsl { get; set; }
     public string CompanyEmail { get; set; } = string.Empty;
     public string? ConfigurationHint { get; set; }
+    public string ConfigSource { get; set; } = "database";
+    public bool UsesContactEmailAsLogin { get; set; }
+    public bool HasPassword { get; set; }
 }
 
 public class EmailTestResultDto
