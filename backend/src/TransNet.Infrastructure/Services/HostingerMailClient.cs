@@ -39,6 +39,12 @@ public sealed class HostingerMailClient
         string? displayName,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(mailboxResourceId))
+        {
+            throw new InvalidOperationException(
+                "Hostinger mailbox resource ID is missing. Ensure your contact email matches a mailbox included in your Agentic Mail API token.");
+        }
+
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
             $"{BaseUrl}/api/v1/mailboxes/{Uri.EscapeDataString(mailboxResourceId)}/send");
@@ -63,7 +69,22 @@ public sealed class HostingerMailClient
             body);
 
         throw new InvalidOperationException(
-            $"Hostinger Mail API returned {(int)response.StatusCode}: {body}");
+            $"Hostinger Mail API returned {(int)response.StatusCode}: {FormatApiErrorBody((int)response.StatusCode, body)}");
+    }
+
+    private static string FormatApiErrorBody(int statusCode, string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+            return "(empty response)";
+
+        if (body.TrimStart().StartsWith('<'))
+        {
+            return statusCode == 404
+                ? "Endpoint not found. Verify the mailbox is included in your Agentic Mail API token and the contact email matches that mailbox."
+                : "Unexpected HTML error page from Hostinger Mail API.";
+        }
+
+        return body.Length > 500 ? body[..500] + "…" : body;
     }
 
     private async Task<HostingerAccountData?> GetAccountAsync(
@@ -78,7 +99,7 @@ public sealed class HostingerMailClient
         {
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new InvalidOperationException(
-                $"Hostinger Mail API auth failed ({(int)response.StatusCode}): {body}");
+                $"Hostinger Mail API auth failed ({(int)response.StatusCode}): {FormatApiErrorBody((int)response.StatusCode, body)}");
         }
 
         var payload = await response.Content.ReadFromJsonAsync<HostingerMeResponse>(cancellationToken: cancellationToken);
@@ -99,7 +120,7 @@ public sealed class HostingerMailClient
 
     public sealed class HostingerMailbox
     {
-        [JsonPropertyName("resource_id")]
+        [JsonPropertyName("resourceId")]
         public string ResourceId { get; set; } = string.Empty;
 
         [JsonPropertyName("address")]
@@ -117,7 +138,7 @@ public sealed class HostingerMailClient
         [JsonPropertyName("html")]
         public string Html { get; set; } = string.Empty;
 
-        [JsonPropertyName("display_name")]
+        [JsonPropertyName("displayName")]
         public string? DisplayName { get; set; }
     }
 }

@@ -247,8 +247,10 @@ export function useAuth() {
 }
 
 export function useDashboardStats() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   return useQuery({
     queryKey: ['dashboard', 'stats'],
+    enabled: isAuthenticated,
     queryFn: async () => {
       const { data } = await apiClient.get<ApiResponse<DashboardStats>>('/dashboard/stats');
       return data.data;
@@ -257,8 +259,10 @@ export function useDashboardStats() {
 }
 
 export function useMessages() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   return useQuery({
     queryKey: ['messages'],
+    enabled: isAuthenticated,
     queryFn: async () => {
       const { data } = await apiClient.get<ApiResponse<ContactMessage[]>>('/messages');
       return data.data;

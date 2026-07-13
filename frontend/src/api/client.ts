@@ -66,6 +66,7 @@ const attachAuthRefresh = (client: AxiosInstance) => {
       if (!refreshToken) {
         useAuthStore.getState().logout();
         isRefreshing = false;
+        redirectToAdminLogin();
         return Promise.reject(error);
       }
 
@@ -82,6 +83,7 @@ const attachAuthRefresh = (client: AxiosInstance) => {
       } catch (refreshError) {
         processQueue(refreshError, null);
         useAuthStore.getState().logout();
+        redirectToAdminLogin();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -91,6 +93,13 @@ const attachAuthRefresh = (client: AxiosInstance) => {
 };
 
 attachAuthRefresh(apiClient);
+
+function redirectToAdminLogin() {
+  if (typeof window === 'undefined') return;
+  if (!window.location.pathname.startsWith('/admin/login')) {
+    window.location.assign('/admin/login');
+  }
+}
 
 export const authApi = {
   login: (payload: LoginRequest) =>

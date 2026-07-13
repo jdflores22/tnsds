@@ -44,6 +44,16 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        const token = localStorage.getItem(TOKEN_KEY);
+        if (!token) {
+          state.user = null;
+          state.accessToken = null;
+          state.refreshToken = null;
+          state.isAuthenticated = false;
+        }
+      },
     },
   ),
 );
