@@ -253,12 +253,49 @@ railway logs               # stream logs
 | --- | --- |
 | Build uses the wrong/no Dockerfile | Ensure `RAILWAY_DOCKERFILE_PATH=docker/Dockerfile.api` and **Root Directory = `/`**. |
 | Deploy is "healthy" internally but the domain 502s | App not listening on the forwarded port. Confirm `ASPNETCORE_URLS=http://0.0.0.0:8080` and `PORT=8080` match. |
+| Browser shows **CORS** + **502** on every API call | The API is **down**, not a CORS config bug. Railway returns 502 without CORS headers, so the browser reports both. Fix the API first (logs, DB, port). |
 | `Database connection string 'DefaultConnection' is not configured` | The `ConnectionStrings__DefaultConnection` variable is missing or the MySQL reference name is wrong. |
 | Startup crash connecting to DB | MySQL service not in the same project, or using the public host. Use `${{MySQL.MYSQLHOST}}` (private `*.railway.internal`). Migrations run at boot, so the DB must be reachable. |
+| Startup crash after importing a localhost MySQL dump | Imported schema can conflict with EF migrations (`Table 'X' already exists`, migration history mismatch). **Do not import dumps into Railway** unless you know the schema matches current migrations. Prefer a clean DB (see §13). |
 | `JWT Secret is not configured` | Set `Jwt__Secret` (≥ 32 chars). |
-| Front end blocked by CORS | Add the exact front‑end origin as `Cors__Origins__0`, `__1`, … (scheme + host, no trailing slash). |
+| Front end blocked by CORS (API returns 200 but browser blocks) | Add the exact front‑end origin as `Cors__Origins__0`, `__1`, … (scheme + host, no trailing slash). |
 | Uploaded images disappear after deploy | Attach a Volume at `/app/wwwroot/uploads` (see §8). |
 | Redis errors in logs | Either fix `ConnectionStrings__Redis` or remove it to use the in‑memory fallback. |
+
+---
+
+## 13. Recovering after wiping or importing the database
+
+The API runs **`Database.MigrateAsync()` on every startup** before it listens for traffic. If the MySQL schema is empty, corrupted, or partially imported from localhost, startup can fail and Railway will show **502 Bad Gateway** for `/health` and all `/api/v1/*` routes.
+
+### Recommended: fresh database (let the app migrate + seed)
+
+1. In Railway, open your **MySQL** service → **Data** (or connect with the CLI).
+2. **Drop all tables** in the app database, or delete the MySQL service and add a new one in the same project.
+3. If you recreated MySQL, confirm the API service still has:
+   ```env
+   ConnectionStrings__DefaultConnection=Server=${{MySQL.MYSQLHOST}};Port=${{MySQL.MYSQLPORT}};Database=${{MySQL.MYSQLDATABASE}};User=${{MySQL.MYSQLUSER}};Password=${{MySQL.MYSQLPASSWORD}};
+   ```
+4. Confirm API variables are still set: `ASPNETCORE_ENVIRONMENT=Production`, `ASPNETCORE_URLS=http://0.0.0.0:8080`, `PORT=8080`, `Jwt__Secret`, `Jwt__RefreshSecret`, `Cors__Origins__0=https://lightgray-alpaca-580456.hostingersite.com`.
+5. **Redeploy** the API service (Deployments → Redeploy).
+6. Watch **Deploy logs**. You should see migration + seed messages, then request logging.
+7. Verify:
+   ```bash
+   curl https://tnsds-production.up.railway.app/health
+   # Expect: Healthy
+   ```
+
+The seeder repopulates default content (admin user, services, settings, SEO, etc.). Check `DatabaseSeeder.cs` for the seeded admin credentials.
+
+### Avoid importing localhost dumps to Railway
+
+Local XAMPP dumps often include tables **and** data but the wrong `__EFMigrationsHistory` state, or an older schema. That makes EF try to create tables that already exist. If you must restore production data, export **only the data** into a schema that was created by a successful Railway deploy, or restore to localhost first and verify migrations match before attempting a remote import.
+
+### Copy localhost *content* safely (optional)
+
+1. Fix Railway with a **clean** migrate + seed first (site works with defaults).
+2. Use the admin CMS on production to re-enter content, **or**
+3. Export/import specific tables only after confirming column names match the current EF model (advanced — easy to break startup).
 
 ---
 

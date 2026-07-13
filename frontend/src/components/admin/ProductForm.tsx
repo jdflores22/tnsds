@@ -68,10 +68,7 @@ export function ProductForm({ item, isSubmitting, onCancel, onSubmit }: ProductF
           shortDescription: data.shortDescription,
           description: data.description,
           featuresJson: JSON.stringify(
-            data.featuresText
-              .split('\n')
-              .map((s) => s.trim())
-              .filter(Boolean),
+            data.featuresText.split('\n').map((line) => line.trimEnd()),
           ),
           screenshotsJson: JSON.stringify(data.screenshots),
           sortOrder: Number(data.sortOrder) || 0,
@@ -88,6 +85,7 @@ export function ProductForm({ item, isSubmitting, onCancel, onSubmit }: ProductF
       <Textarea
         label="Short description"
         rows={2}
+        className="whitespace-pre-wrap"
         {...register('shortDescription')}
         placeholder="Brief description shown on listing cards"
       />
@@ -106,8 +104,9 @@ export function ProductForm({ item, isSubmitting, onCancel, onSubmit }: ProductF
       <Textarea
         label="Key features"
         rows={5}
+        className="whitespace-pre-wrap"
         {...register('featuresText')}
-        placeholder="One feature per line"
+        placeholder="One feature per line (blank lines are kept as spacing)"
       />
       <p className="-mt-2 text-xs text-slate-500">Shown in the product detail sidebar.</p>
 

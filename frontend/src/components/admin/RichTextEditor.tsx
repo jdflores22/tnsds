@@ -17,6 +17,7 @@ import {
   Undo2,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { richTextEditorClass } from '@/utils/richTextClasses';
 
 interface RichTextEditorProps {
   label?: string;
@@ -72,8 +73,7 @@ export function RichTextEditor({
     onUpdate: ({ editor: ed }) => onChange(ed.getHTML()),
     editorProps: {
       attributes: {
-        class:
-          'prose prose-sm max-w-none min-h-[12rem] px-4 py-3 focus:outline-none prose-headings:text-primary-900 prose-p:text-slate-700',
+        class: richTextEditorClass,
       },
     },
   });

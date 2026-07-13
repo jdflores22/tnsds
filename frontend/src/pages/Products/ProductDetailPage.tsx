@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/Button';
 import { PageLoader } from '@/components/ui/Spinner';
 import { resolveMediaUrl } from '@/utils/media';
 import { parseJsonArray } from '@/utils/jsonArray';
+import { cn } from '@/utils/cn';
+import { richTextContentClass } from '@/utils/richTextClasses';
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -25,6 +27,8 @@ export default function ProductDetailPage() {
   const features = parseJsonArray(product.featuresJson);
   const screenshots = parseJsonArray(product.screenshotsJson);
   const logoUrl = product.logoUrl ? resolveMediaUrl(product.logoUrl) : null;
+  const darkOutlineButtonClass =
+    'border-white/25 bg-transparent text-white hover:border-white/40 hover:bg-white/10 hover:text-white';
 
   return (
     <>
@@ -43,16 +47,16 @@ export default function ProductDetailPage() {
                 )}
                 <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{product.name}</h1>
               </div>
-              <p className="mt-4 text-lg text-slate-300">{product.shortDescription}</p>
+              <p className="mt-4 whitespace-pre-line text-lg text-slate-300">{product.shortDescription}</p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link to="/contact">
-                  <Button className="bg-brand-gold-500 text-primary-950 hover:bg-brand-gold-400">
+                <Link to="/contact" className="inline-flex">
+                  <Button variant="secondary">
                     Request demo
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/products">
-                  <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+                <Link to="/products" className="inline-flex">
+                  <Button variant="outline" className={darkOutlineButtonClass}>
                     All products
                   </Button>
                 </Link>
@@ -69,7 +73,7 @@ export default function ProductDetailPage() {
               <section>
                 <h2 className="text-xl font-semibold text-primary-900">Overview</h2>
                 <div
-                  className="prose prose-slate mt-4 max-w-none prose-p:text-slate-600"
+                  className={cn(richTextContentClass, 'mt-4 prose-p:text-slate-600')}
                   dangerouslySetInnerHTML={{ __html: product.description }}
                 />
               </section>
@@ -98,15 +102,21 @@ export default function ProductDetailPage() {
               <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-semibold text-primary-900">Key features</h2>
                 <ul className="mt-4 space-y-3">
-                  {features.map((feature) => (
-                    <li key={feature} className="flex gap-2.5 text-sm text-slate-600">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-gold-500" />
-                      {feature}
-                    </li>
-                  ))}
+                  {features.map((feature, index) =>
+                    feature.trim() === '' ? (
+                      <li key={`feature-space-${index}`} className="h-3" aria-hidden="true" />
+                    ) : (
+                      <li key={`${feature}-${index}`} className="flex gap-2.5 text-sm text-slate-600">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-gold-500" />
+                        {feature}
+                      </li>
+                    ),
+                  )}
                 </ul>
                 <Link to="/contact" className="mt-6 block">
-                  <Button className="w-full">Talk to sales</Button>
+                  <Button variant="secondary" className="w-full">
+                    Talk to sales
+                  </Button>
                 </Link>
               </div>
             </aside>
