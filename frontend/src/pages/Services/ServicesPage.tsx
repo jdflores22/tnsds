@@ -18,6 +18,7 @@ import { PageSEO } from '@/components/common/PageSEO';
 import { PageHero } from '@/components/common/PageHero';
 import { Container } from '@/components/common/Container';
 import { SectionHeading } from '@/components/common/SectionHeading';
+import { HexagonBadge } from '@/components/marketing/HexagonBadge';
 import { Button } from '@/components/ui/Button';
 import { PageLoader } from '@/components/ui/Spinner';
 import { useSiteSettingsMap } from '@/hooks/useSiteSettingsMap';
@@ -273,12 +274,13 @@ function ServiceCard({ service, index }: { service: Service; index: number }) {
     >
       <div className="flex flex-1 flex-col p-6">
         <div className="mb-5 flex justify-center">
-          <div className="relative h-16 w-16">
-            <div className={cn('hexagon-frame absolute inset-0', style.iconBg)} />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Icon className={cn('h-7 w-7', style.iconColor)} strokeWidth={1.5} />
-            </div>
-          </div>
+          <HexagonBadge
+            size="md"
+            stroke="#d4a017"
+            fillClassName="bg-brand-gold-500/10 text-brand-gold-600"
+          >
+            <Icon className="h-7 w-7" strokeWidth={1.5} />
+          </HexagonBadge>
         </div>
 
         <h3 className="text-center text-sm font-medium uppercase tracking-wide text-primary-900">

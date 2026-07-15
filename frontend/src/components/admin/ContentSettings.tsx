@@ -154,6 +154,16 @@ const CONTENT_GROUPS: {
     fields: [{ key: 'footer_text', label: 'Footer tagline', type: 'textarea', rows: 3 }],
   },
   {
+    id: 'social-tracking',
+    title: 'Booking & analytics',
+    description: 'Calendly / booking URL and Google Analytics.',
+    icon: Share2,
+    fields: [
+      { key: 'calendly_url', label: 'Calendly / booking URL' },
+      { key: 'ga_measurement_id', label: 'Google Analytics 4 Measurement ID (G-XXXX)' },
+    ],
+  },
+  {
     id: 'social',
     title: 'Social links',
     description: 'Social profile URLs for the website.',

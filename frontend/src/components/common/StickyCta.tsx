@@ -1,16 +1,18 @@
 import { Link } from 'react-router-dom';
 import { MessageCircle, Phone } from 'lucide-react';
+import { isSocialLinkVisible } from '@/utils/socialLinks';
 import { useSiteSettingsMap } from '@/hooks/useSiteSettingsMap';
 import { cn } from '@/utils/cn';
 
 export function StickyCta() {
   const { get } = useSiteSettingsMap();
   const whatsapp = get('social_whatsapp', '');
+  const showWhatsapp = isSocialLinkVisible(whatsapp, get('social_whatsapp_enabled', 'true'));
   const calendly = get('calendly_url', '');
 
   return (
     <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
-      {whatsapp && (
+      {showWhatsapp && (
         <a
           href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
           target="_blank"

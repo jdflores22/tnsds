@@ -5,11 +5,14 @@ import { useServices } from '@/api/hooks';
 import { Container } from '@/components/common/Container';
 import { PageSection } from '@/components/common/SectionHeading';
 import { SectionHeading } from '@/components/common/SectionHeading';
+import { HexagonBadge } from '@/components/marketing/HexagonBadge';
 import { Spinner } from '@/components/ui/Spinner';
 import { useSectionContent, usePageSectionTheme } from '@/hooks/useSectionContent';
 import { cn } from '@/utils/cn';
 
 const icons = [Code2, Smartphone, Layers, Wrench];
+
+const GOLD_STROKE = '#d4a017';
 
 export function ServicesSection() {
   const { data: services, isLoading } = useServices();
@@ -42,9 +45,10 @@ export function ServicesSection() {
             No services published yet.
           </p>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {displayServices.map((service, index) => {
               const Icon = icons[index % icons.length];
+
               return (
                 <motion.div
                   key={service.id}
@@ -56,26 +60,27 @@ export function ServicesSection() {
                   <Link
                     to={`/services/${service.slug}`}
                     className={cn(
-                      'group relative flex h-full flex-col overflow-hidden rounded-2xl border p-8 transition-all duration-300',
+                      'group relative flex h-full flex-col overflow-hidden rounded-2xl border p-6 transition-all duration-300',
                       isDark
                         ? 'border-white/10 bg-white/[0.03] hover:border-brand-gold-400/40 hover:bg-white/[0.06]'
                         : 'border-slate-200 bg-white hover:border-brand-gold-400/60 hover:shadow-[0_20px_45px_-25px_rgba(10,26,46,0.45)]',
                     )}
                   >
-                    {/* Top accent bar reveals on hover */}
                     <span className="absolute inset-x-0 top-0 h-1 origin-left scale-x-0 bg-gradient-to-r from-primary-600 via-brand-gold-500 to-brand-red-500 transition-transform duration-300 group-hover:scale-x-100" />
 
-                    <div className="mb-6 flex items-start justify-between">
-                      <div
-                        className={cn(
-                          'flex h-14 w-14 items-center justify-center rounded-xl transition-colors duration-300',
+                    <div className="mb-5 flex items-start justify-between gap-3">
+                      <HexagonBadge
+                        size="md"
+                        stroke={GOLD_STROKE}
+                        isDark={isDark}
+                        fillClassName={cn(
                           isDark
-                            ? 'bg-white/5 text-brand-gold-400 group-hover:bg-brand-gold-400/15'
-                            : 'bg-primary-50 text-primary-800 group-hover:bg-primary-900 group-hover:text-white',
+                            ? 'bg-white/[0.08] text-brand-gold-400 group-hover:bg-brand-gold-400/15'
+                            : 'bg-brand-gold-500/10 text-brand-gold-600 group-hover:bg-brand-gold-500 group-hover:text-white',
                         )}
                       >
-                        <Icon className="h-6 w-6" strokeWidth={1.5} />
-                      </div>
+                        <Icon className="h-5 w-5 transition-colors duration-300" strokeWidth={1.5} />
+                      </HexagonBadge>
                       <span
                         className={cn(
                           'font-mono text-sm font-semibold tabular-nums',
@@ -88,7 +93,7 @@ export function ServicesSection() {
 
                     <h3
                       className={cn(
-                        'text-xl font-semibold tracking-tight',
+                        'text-lg font-semibold tracking-tight',
                         isDark ? 'text-white' : 'text-primary-900',
                       )}
                     >
@@ -96,7 +101,7 @@ export function ServicesSection() {
                     </h3>
                     <p
                       className={cn(
-                        'mt-3 flex-1 text-sm leading-relaxed',
+                        'mt-2 flex-1 text-sm leading-relaxed',
                         isDark ? 'text-slate-400' : 'text-slate-600',
                       )}
                     >
@@ -105,7 +110,7 @@ export function ServicesSection() {
 
                     <span
                       className={cn(
-                        'mt-6 inline-flex items-center gap-1.5 text-sm font-semibold transition-colors',
+                        'mt-5 inline-flex items-center gap-1.5 text-sm font-semibold transition-colors',
                         isDark
                           ? 'text-brand-gold-400 group-hover:text-brand-gold-300'
                           : 'text-primary-800 group-hover:text-brand-gold-600',

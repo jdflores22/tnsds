@@ -139,7 +139,7 @@ export function ProductForm({ item, isSubmitting, onCancel, onSubmit }: ProductF
             multiple
             preview="cover"
             uploadLabel="Upload screenshots"
-            hint="Product UI screenshots for the detail page."
+            hint="Product UI screenshots. On a featured product, 2 or more images enable slide mode in the spotlight."
           />
         )}
       />

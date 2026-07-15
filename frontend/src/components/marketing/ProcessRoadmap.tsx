@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
 import type { ProcessStep } from '@/types';
+import { HexagonBadge } from '@/components/marketing/HexagonBadge';
 import { cn } from '@/utils/cn';
+
+const GOLD_STROKE = '#d4a017';
 
 interface ProcessRoadmapProps {
   steps: ProcessStep[];
@@ -15,129 +18,61 @@ export function ProcessRoadmap({ steps, className, variant = 'light' }: ProcessR
 
   return (
     <div className={cn('w-full', className)}>
-      {/* Desktop: horizontal roadmap */}
-      <div className="hidden lg:block">
-        <div className="relative">
-          <div
-            className={cn(
-              'absolute left-[8%] right-[8%] top-6 h-0.5',
-              isDark
-                ? 'bg-gradient-to-r from-primary-700 via-brand-gold-500 to-primary-700'
-                : 'bg-gradient-to-r from-primary-200 via-brand-gold-400 to-primary-200',
-            )}
-            aria-hidden
-          />
-
-          <ol
-            className="grid gap-6"
-            style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
-          >
-            {steps.map((step, index) => (
-              <motion.li
-                key={step.id}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.07 }}
-                className="relative flex flex-col items-center text-center"
-              >
-                <div
-                  className={cn(
-                    'relative z-10 flex h-12 w-12 items-center justify-center rounded-full border-2 text-xs font-bold tabular-nums',
-                    isDark
-                      ? 'border-brand-gold-500 bg-primary-900 text-brand-gold-400'
-                      : 'border-brand-gold-500 bg-white text-primary-900 shadow-sm',
-                  )}
-                >
-                  {step.stepLabel}
-                </div>
-
-                <div
-                  className={cn(
-                    'mt-6 w-full rounded-xl border p-4',
-                    isDark
-                      ? 'border-white/10 bg-white/5'
-                      : 'border-slate-200 bg-white sm-card',
-                  )}
-                >
-                  <h3
-                    className={cn(
-                      'text-sm font-semibold uppercase tracking-wide',
-                      isDark ? 'text-white' : 'text-primary-900',
-                    )}
-                  >
-                    {step.title}
-                  </h3>
-                  <p
-                    className={cn(
-                      'mt-2 text-sm leading-relaxed',
-                      isDark ? 'text-slate-300' : 'text-slate-600',
-                    )}
-                  >
-                    {step.description}
-                  </p>
-                </div>
-              </motion.li>
-            ))}
-          </ol>
-        </div>
-      </div>
-
-      {/* Mobile / tablet: vertical roadmap */}
-      <ol className="relative space-y-0 lg:hidden">
-        <div
-          className={cn(
-            'absolute bottom-4 left-[1.375rem] top-4 w-0.5',
-            isDark
-              ? 'bg-gradient-to-b from-primary-700 via-brand-gold-500 to-primary-700'
-              : 'bg-gradient-to-b from-primary-200 via-brand-gold-400 to-primary-200',
-          )}
-          aria-hidden
-        />
-
+      <ol
+        className={cn(
+          'grid gap-4 sm:grid-cols-2',
+          steps.length <= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3 xl:grid-cols-6',
+        )}
+      >
         {steps.map((step, index) => (
           <motion.li
             key={step.id}
-            initial={{ opacity: 0, x: -12 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: index * 0.06 }}
-            className="relative flex gap-5 pb-10 last:pb-0"
+            transition={{ delay: index * 0.06, duration: 0.4 }}
+            className={cn(
+              'group relative flex h-full flex-col overflow-hidden rounded-2xl border p-6 transition-all duration-300',
+              isDark
+                ? 'border-white/10 bg-white/[0.03] hover:border-brand-gold-400/40 hover:bg-white/[0.06]'
+                : 'border-slate-200 bg-white hover:-translate-y-1 hover:border-brand-gold-400/60 hover:shadow-[0_24px_50px_-30px_rgba(10,26,46,0.5)]',
+            )}
           >
-            <div
-              className={cn(
-                'relative z-10 mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold tabular-nums',
-                isDark
-                  ? 'border-brand-gold-500 bg-primary-900 text-brand-gold-400'
-                  : 'border-brand-gold-500 bg-white text-primary-900 shadow-sm',
-              )}
-            >
-              {step.stepLabel}
+            <div className="mb-5">
+              <HexagonBadge
+                size="md"
+                stroke={GOLD_STROKE}
+                isDark={isDark}
+                fillClassName={cn(
+                  isDark
+                    ? 'bg-white/[0.08] text-brand-gold-400 group-hover:bg-brand-gold-400/15'
+                    : 'bg-brand-gold-500/10 text-brand-gold-600 group-hover:bg-brand-gold-500 group-hover:text-white',
+                )}
+              >
+                <span className="text-sm font-bold tabular-nums transition-colors duration-300">
+                  {step.stepLabel}
+                </span>
+              </HexagonBadge>
             </div>
 
-            <div
+            <h3
               className={cn(
-                'flex-1 rounded-xl border p-4',
-                isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-white sm-card',
+                'text-lg font-semibold tracking-tight',
+                isDark ? 'text-white' : 'text-primary-900',
               )}
             >
-              <h3
-                className={cn(
-                  'text-sm font-semibold uppercase tracking-wide',
-                  isDark ? 'text-white' : 'text-primary-900',
-                )}
-              >
-                {step.title}
-              </h3>
-              <p
-                className={cn(
-                  'mt-2 text-sm leading-relaxed',
-                  isDark ? 'text-slate-300' : 'text-slate-600',
-                )}
-              >
-                {step.description}
-              </p>
-            </div>
+              {step.title}
+            </h3>
+            <p
+              className={cn(
+                'mt-2 flex-1 text-sm leading-relaxed',
+                isDark ? 'text-slate-400' : 'text-slate-600',
+              )}
+            >
+              {step.description}
+            </p>
+
+            <span className="mt-5 h-px w-full origin-left scale-x-0 bg-gradient-to-r from-brand-gold-500/70 to-transparent transition-transform duration-300 group-hover:scale-x-100" />
           </motion.li>
         ))}
       </ol>

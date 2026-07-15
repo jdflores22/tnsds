@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ContentSettings } from '@/components/admin/ContentSettings';
+import { SocialLinksSettings } from '@/components/admin/SocialLinksSettings';
 import { SettingsTabBar } from '@/components/admin/SettingsTabBar';
 
 type FooterTab = 'footer' | 'social' | 'legal';
@@ -17,7 +18,12 @@ export function FooterSettings() {
     <div className="space-y-4">
       <SettingsTabBar tabs={TABS} active={tab} onChange={setTab} />
       {tab === 'footer' && <ContentSettings includeGroups={['general']} variant="compact" />}
-      {tab === 'social' && <ContentSettings includeGroups={['social']} variant="compact" />}
+      {tab === 'social' && (
+        <div className="space-y-6">
+          <SocialLinksSettings variant="compact" />
+          <ContentSettings includeGroups={['social-tracking']} variant="compact" />
+        </div>
+      )}
       {tab === 'legal' && <ContentSettings includeGroups={['legal']} variant="compact" />}
     </div>
   );
