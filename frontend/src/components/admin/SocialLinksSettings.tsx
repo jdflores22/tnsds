@@ -179,7 +179,7 @@ export function SocialLinksSettings({ variant = 'panel' }: { variant?: 'panel' |
       })}
 
       <div className="flex items-center justify-between gap-3 pt-1">
-        <SaveFeedback show={saved} />
+        <SaveFeedback saved={saved} isSaving={saving || Boolean(togglingKey)} />
         <Button type="button" onClick={() => void handleSaveUrls()} disabled={saving}>
           {saving ? 'Saving…' : 'Save URLs'}
         </Button>
