@@ -34,8 +34,15 @@ public class MessagesController : ControllerBase
     [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<ContactMessageDto>>> Create([FromBody] CreateContactMessageDto dto)
     {
-        var item = await _service.CreateAsync(dto);
-        return Ok(ApiResponse<ContactMessageDto>.Ok(item));
+        try
+        {
+            var item = await _service.CreateAsync(dto);
+            return Ok(ApiResponse<ContactMessageDto>.Ok(item));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ApiResponse<ContactMessageDto>.Fail(ex.Message));
+        }
     }
 
     [HttpPut("{id:guid}")]

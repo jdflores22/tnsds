@@ -1,16 +1,24 @@
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Send } from 'lucide-react';
 import { useSubmitContact } from '@/api/hooks';
+import { CONTACT_SENDER_TYPES } from '@/constants/contactSenderTypes';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/utils/cn';
 
+const senderTypeValues = CONTACT_SENDER_TYPES.map((item) => item.value) as [
+  string,
+  ...string[],
+];
+
 const schema = z.object({
   name: z.string().min(2, 'Name is required'),
   email: z.string().email('Valid email required'),
+  companyName: z.string().min(2, 'Company name is required'),
+  senderType: z.enum(senderTypeValues, { message: 'Please select who is sending this message' }),
   subject: z.string().min(3, 'Subject is required'),
   body: z.string().min(10, 'Message must be at least 10 characters'),
 });
@@ -35,6 +43,7 @@ export function ContactFormCard({
   const {
     register,
     handleSubmit,
+    control,
     reset,
     formState: { errors },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
@@ -64,7 +73,10 @@ export function ContactFormCard({
           Submissions are sent to{' '}
           <a
             href={`mailto:${recipientEmail}`}
-            className={cn('font-medium underline-offset-2 hover:underline', isDark ? 'text-brand-gold-400' : 'text-primary-700')}
+            className={cn(
+              'font-medium underline-offset-2 hover:underline',
+              isDark ? 'text-brand-gold-400' : 'text-primary-700',
+            )}
           >
             {recipientEmail}
           </a>
@@ -91,10 +103,61 @@ export function ContactFormCard({
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+        <div>
+          <p
+            className={cn(
+              'mb-2 text-sm font-medium',
+              isDark ? 'text-slate-200' : 'text-slate-700',
+            )}
+          >
+            Who is sending this message?
+          </p>
+          <Controller
+            name="senderType"
+            control={control}
+            render={({ field }) => (
+              <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Sender type">
+                {CONTACT_SENDER_TYPES.map((option) => {
+                  const selected = field.value === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => field.onChange(option.value)}
+                      className={cn(
+                        'rounded-xl border px-3 py-3 text-left text-sm font-medium transition-all',
+                        selected
+                          ? isDark
+                            ? 'border-brand-gold-400/60 bg-brand-gold-400/10 text-brand-gold-300'
+                            : 'border-brand-gold-500/50 bg-brand-gold-500/5 text-primary-900 shadow-sm'
+                          : isDark
+                            ? 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300',
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          />
+          {errors.senderType?.message && (
+            <p className="mt-1.5 text-xs text-brand-red-600">{errors.senderType.message}</p>
+          )}
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <Input label="Name" error={errors.name?.message} {...register('name')} />
           <Input label="Email" type="email" error={errors.email?.message} {...register('email')} />
         </div>
+        <Input
+          label="Company name"
+          error={errors.companyName?.message}
+          {...register('companyName')}
+        />
         <Input label="Subject" error={errors.subject?.message} {...register('subject')} />
         <Textarea label="Message" rows={5} error={errors.body?.message} {...register('body')} />
         <Button type="submit" className="w-full sm:w-auto" isLoading={mutation.isPending}>

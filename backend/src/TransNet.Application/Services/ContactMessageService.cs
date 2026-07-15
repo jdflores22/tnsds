@@ -32,12 +32,30 @@ public class ContactMessageService : IContactMessageService
         return entity is null ? null : Map(entity);
     }
 
+    private static readonly HashSet<string> AllowedSenderTypes = new(StringComparer.Ordinal)
+    {
+        "trucker",
+        "shipping_lines",
+        "container_yard",
+        "private_company",
+    };
+
     public async Task<ContactMessageDto> CreateAsync(CreateContactMessageDto dto, CancellationToken cancellationToken = default)
     {
+        var senderType = dto.SenderType?.Trim() ?? string.Empty;
+        if (!AllowedSenderTypes.Contains(senderType))
+            throw new ArgumentException("Invalid sender type. Choose Trucker, Shipping Lines, Container Yard, or Private Company.");
+
+        var companyName = dto.CompanyName?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(companyName))
+            throw new ArgumentException("Company name is required.");
+
         var entity = new ContactMessage
         {
             Name = dto.Name,
             Email = dto.Email,
+            CompanyName = companyName,
+            SenderType = senderType,
             Subject = dto.Subject,
             Body = dto.Body
         };
@@ -51,11 +69,15 @@ public class ContactMessageService : IContactMessageService
             cancellationToken);
 
         var adminEmail = await SiteSettingsReader.GetCompanyEmailAsync(_context, cancellationToken);
+        var senderLabel = FormatSenderType(entity.SenderType);
 
         await _emailService.SendAsync(
             adminEmail,
             $"New contact message from {dto.Name}",
-            $"<p><strong>{dto.Name}</strong> ({dto.Email}) submitted a message.</p><p><strong>Subject:</strong> {dto.Subject}</p><p>{dto.Body}</p>",
+            $"<p><strong>{dto.Name}</strong> ({dto.Email}) submitted a message.</p>" +
+            $"<p><strong>Company:</strong> {companyName}</p>" +
+            $"<p><strong>Sender type:</strong> {senderLabel}</p>" +
+            $"<p><strong>Subject:</strong> {dto.Subject}</p><p>{dto.Body}</p>",
             cancellationToken);
 
         return Map(entity);
@@ -83,11 +105,22 @@ public class ContactMessageService : IContactMessageService
         return true;
     }
 
+    private static string FormatSenderType(string? value) => value switch
+    {
+        "trucker" => "Trucker",
+        "shipping_lines" => "Shipping Lines",
+        "container_yard" => "Container Yard",
+        "private_company" => "Private Company",
+        _ => string.IsNullOrWhiteSpace(value) ? "Not specified" : value,
+    };
+
     private static ContactMessageDto Map(ContactMessage entity) => new()
     {
         Id = entity.Id,
         Name = entity.Name,
         Email = entity.Email,
+        CompanyName = entity.CompanyName,
+        SenderType = entity.SenderType,
         Subject = entity.Subject,
         Body = entity.Body,
         Status = entity.Status,

@@ -199,6 +199,8 @@ export interface ContactMessage {
   id: string;
   name: string;
   email: string;
+  companyName: string;
+  senderType: string;
   subject: string;
   body: string;
   status: MessageStatus;
@@ -312,6 +314,8 @@ export interface DashboardStats {
 export interface ContactFormRequest {
   name: string;
   email: string;
+  companyName: string;
+  senderType: string;
   subject: string;
   body: string;
 }

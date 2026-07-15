@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { CheckCheck, Clock, Inbox, Mail, Reply, RotateCcw, Search } from 'lucide-react';
 import { useMessages, useUpdateMessageStatus } from '@/api/hooks';
 import { MessageStatus, type ContactMessage } from '@/types';
+import { formatContactSenderType } from '@/constants/contactSenderTypes';
 import { AdminCard, AdminCardBody } from '@/components/admin/AdminCard';
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
@@ -70,8 +71,10 @@ export default function MessagesAdminPage() {
         (m) =>
           m.name.toLowerCase().includes(q) ||
           m.email.toLowerCase().includes(q) ||
+          m.companyName?.toLowerCase().includes(q) ||
           m.subject?.toLowerCase().includes(q) ||
-          m.body?.toLowerCase().includes(q),
+          m.body?.toLowerCase().includes(q) ||
+          formatContactSenderType(m.senderType).toLowerCase().includes(q),
       );
     }
     return list;
@@ -181,6 +184,7 @@ export default function MessagesAdminPage() {
               <THead>
                 <TR>
                   <TH>From</TH>
+                  <TH>Type</TH>
                   <TH>Subject</TH>
                   <TH>Status</TH>
                   <TH>Received</TH>
@@ -212,8 +216,14 @@ export default function MessagesAdminPage() {
                               {msg.name}
                             </p>
                             <p className="truncate text-xs text-slate-400">{msg.email}</p>
+                            {msg.companyName && (
+                              <p className="truncate text-xs text-slate-500">{msg.companyName}</p>
+                            )}
                           </div>
                         </div>
+                      </TD>
+                      <TD className="whitespace-nowrap text-slate-600">
+                        {formatContactSenderType(msg.senderType)}
                       </TD>
                       <TD className="max-w-xs truncate">{msg.subject}</TD>
                       <TD>
@@ -276,6 +286,12 @@ export default function MessagesAdminPage() {
                 >
                   {selected.email}
                 </a>
+                {selected.companyName && (
+                  <p className="mt-1 text-xs font-medium text-primary-800">{selected.companyName}</p>
+                )}
+                <p className="mt-1 text-xs font-medium text-slate-500">
+                  {formatContactSenderType(selected.senderType)}
+                </p>
               </div>
               <div className="text-right">
                 <Badge variant={statusMeta[selected.status].variant}>
